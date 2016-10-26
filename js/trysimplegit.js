@@ -24,7 +24,7 @@ var cloneRepo = (repoUrl) => {
 
 
 var showGitLog = () => {
-  SimpleGit.log({"--pretty=oneline":true },(error, data) => {
+  SimpleGit.log({ },(error, data) => {
     if (!error) {
       console.log(data);
     }
@@ -34,6 +34,11 @@ var showGitLog = () => {
   //     console.log(data);
   //   }
   // });
+}
+
+var showGitBlame = () => {
+
+
 }
 
 var getRepoName = (repoUrl) => {
