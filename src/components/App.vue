@@ -35,7 +35,7 @@
         <!-- Page Content -->
         <div class="page-content-wrapper">
             <div class="container-fluid">
-                <router-view></router-view>
+                <router-view keep-alive></router-view>
             </div>
         </div>
         <!-- /#page-content-wrapper -->
