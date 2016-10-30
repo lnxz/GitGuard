@@ -1,5 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+<style>
+
+.axis--x path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+#content-container {
+  width: 700px ;
+  margin: 0  auto;
+}
+</style>
+
+
 <head>
   <title>Assignment 5</title>
   <meta charset="utf-8">
@@ -8,7 +26,10 @@
   <link rel="stylesheet" href="css/simple-sidebar.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <script src="/js/gitguard.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/d3-time.v1.min.js"></script>
+  <script src="https://d3js.org/d3-time-format.v2.min.js"></script>
+  <script src="/js/test.js"></script>
 </head>
 <body style="height:1500px">
 
@@ -19,7 +40,7 @@
     </div>
     <ul class="nav navbar-nav">
       <li class="active"><a href="#">Summary</a></li>
-      <li><a href="./pages/compare.html">Compare</a></li>
+      <li><a href="#">Compare</a></li>
       <li><a href="#">File History</a></li>
       <li><a href="#">Members LOC</a></li>
     </ul>
@@ -45,22 +66,171 @@
   <!-- /#sidebar-wrapper -->
 
   <!-- Page Content -->
+  <svg width="1500" height="1000"></svg>
+
   <div id="page-content-wrapper">
     <div class="container-fluid">
       <div class="row">
-        <div class="col-lg-12">
-          <h1 id="title">alsdkjaslda</h1>
-          <p>MANY MANY CHARTS HERE</p>
-          <p>MANY MANY CHARTS HERE</p>
-          <p>MANY MANY CHARTS HERE</p>
-          <p>MANY MANY CHARTS HERE</p>
-          <p>MANY MANY CHARTS HERE</p>
-          <p>MANY MANY CHARTS HERE</p>
+        <div class="col-lg-15 ">
+            <div id="content-container">
+
+            <svg width="1250" height="1000"></svg>
+      <script>
+//--chart stuff
+    
+      var svg = d3.select("svg"),
+          margin = {top: 50, right: 50, bottom: 30, left: 100},
+          width = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom,
+          g = svg.append("g").attr("transfoconrm", "translate(" + margin.left + "," + margin.top + ")");
+
+      var parseTime = d3.timeParse("%d-%b-%y");
+
+      var x = d3.scaleTime()
+          .rangeRound([0, width]);
+
+      var y = d3.scaleLinear()
+          .rangeRound([height, 0]);
+
+      var line = d3.line()
+          .x(function(d) { return x(d.date); })
+          .y(function(d) { return y(d.commit); });
+
+
+      //--chart stuff
+
+
+            var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
+            //var localJson = "jsonStuff/dangra.json";
+            var localJson = "jsonStuff/pablohoffman.json";
+
+            //var parseTime =d3.time.format("%d-%b-%y");
+              
+
+              
+
+            // console.log(data);
+
+
+            var someData;
+            var data = [];
+            d3.json(localJson, function(response) {
+
+            
+              for (var i = 0; i < response.length; i++){ 
+                    var item = response[i];
+                    var itemDate= new Date(item.date);
+                    //2-May-07
+                    var itemCurrentDate= itemDate.getDate();
+                    var itemCurrentMonth = itemDate.getMonth();
+                    var itemCurrentYear = itemDate.getFullYear();
+                    itemCurrentYear = itemCurrentYear.toString().substr(2,2);
+                    var itemDateMthYearCombine = itemCurrentDate + "-" +MONTH[itemCurrentMonth] + "-" + itemCurrentYear;
+                    //var itemLocation=containsObject(parseTime(itemDateMthYearCombine) , data);
+                    var itemLocation=containsObject(parseTime(itemDateMthYearCombine), itemCurrentMonth,itemCurrentYear, data );
+
+                    
+                      if(itemLocation==-1) //gt no common date, add new date SEPERATE BY DAY
+                      {                
+                          data.push(
+                            {
+                              'date' : itemCurrentDate,
+                              'month' : itemCurrentMonth,
+                              'year' : itemCurrentYear,
+                              'date' : parseTime(itemDateMthYearCombine),
+                              'commit' : '1'
+                            });
+                      }//gt existing date liao, increment commit
+                      else 
+                      {        
+                          data[itemLocation].commit = parseInt(data[itemLocation].commit) +1;
+                      }
+              }
+              data = data.sort(sortByDateAscending);
+
+
+
+        // for(var i=0; i<data.length;i++) console.log(data[i].date + " " + data[i].commit); 
+
+        x.domain(d3.extent(data, function(d) { return d.date; }));
+        y.domain(d3.extent(data, function(d) { return d.commit; }));
+
+        //x.domain(data.map(function(d) { return d.date; }));
+        //y.domain([0, d3.max(data, function(d) { return d.commit; })]);
+        
+
+        g.append("g").attr("class", "axis axis--x").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x));
+        g.append("g").attr("class", "axis axis--y").call(d3.axisLeft(y)).append("text").attr("fill", "#000").attr("transform", "rotate(-90)").attr("y", 6).attr("dy", "0.71em").style("text-anchor", "end").text("Price ($)");
+        g.append("path").datum(data).attr("class", "line").attr("d", line);
+
+
+      });
+  
+      function sortByDateAscending(a, b) {
+          // Dates will be cast to numbers automagically:
+          return a.date - b.date;
+      }
+      function containsObject(shortDate,obj,obj2, list) {
+          var i;
+          var itemLocation=-1;
+          for (i = 0; i < list.length; i++) {
+            
+             // if (list[i].date.toString() === shortDate.toString()) {
+              //    return itemLocation=i;
+             // }
+             
+              if (list[i].month.toString() === obj.toString() && list[i].year.toString() === obj2.toString()) { 
+               // if month and year match
+                  return itemLocation=i;
+              }
+          }
+
+          return itemLocation;
+      }
+      function checkDay(day1, day2){
+        return (day1==day2);
+      }
+      function checkMonth(month1, month2){
+        return (month1==month2);
+      }
+      function checkYear(year1, year2){
+        return (year1==year2);
+      }
+      function compare(integer1, integer2){
+        if(integer1>integer2)
+        {
+          return integer1;
+        }
+        else
+        {
+          return integer2;
+        }
+      }
+      function monthDiff(d1, d2){
+          var months;
+          months = (d2.getFullYear() - d1.getFullYear()) * 12;
+          months -= d1.getMonth() + 1;
+          months += d2.getMonth();
+          // edit: increment months if d2 comes later in its month than d1 in its month
+          if (d2.getDate() >= d1.getDate())
+              months++
+          // end edit
+          return months <= 0 ? 0 : months;
+      }
+    </script>
+
+
+            </div>
+
+
+
         </div>
       </div>
     </div>
   </div>
   <!-- /#page-content-wrapper -->
+   <script src="bundle.js"></script>
 </div>
 
 </body>
