@@ -4,6 +4,9 @@ const REPOS_DIR = 'repositories/';
 let repoPath = REPOS_DIR + '';
 
 const CHILD_PROCESS = require('child_process');
+const execSeries = require('exec-series');
+const executive = require('executive');
+
 // const shortlog = spawn('git', ['shortlog', '-n'], { stdio: ['inherit'] });
 //
 // ls.stdout.on('data', (data) => {
@@ -22,18 +25,14 @@ const CHILD_PROCESS = require('child_process');
 
 
 var gitClone = (repoUrl, callback) => {
-  console.log('git clone');
   let repoPath = REPOS_DIR + getRepoName(repoUrl);
   // start executing
   let command = CHILD_PROCESS.exec(`git clone ${repoUrl} ${repoPath}`, function (error, stdout, stderr) {
     if (error) {
-      console.log(error.stack);
-      console.log('Error code: ' + error.code);
-      console.log('Signal received: ' + error.signal);
-      callback(error, stdout, repoPath);
-      return;
+      // console.log(error.stack);
+      // console.log('Error code: ' + error.code);
+      // console.log('Signal received: ' + error.signal);
     }
-    // success case
     callback(error, stdout, repoPath);
   });
 
@@ -43,9 +42,23 @@ var gitClone = (repoUrl, callback) => {
 
 }
 
-//git log --format='%aN' | sort -u
-//get all authors
-//for each author, do the next command to get json obj
+var gitLog = (repoPath, arguments, callback) => {
+  // start executing
+  let command = CHILD_PROCESS.exec(`cd ${repoPath} && git log ${arguments}`, function (error, stdout, stderr) {
+    if (error) {
+      // console.log(error.stack);
+      // console.log('Error code: ' + error.code);
+      // console.log('Signal received: ' + error.signal);
+    }
+    // success case
+    callback(error, stdout);
+  });
+
+  command.on('exit', function (code) {
+    console.log('Child process exited with exit code ' + code);
+  });
+
+}
 
 //git log --shortstat --author="Bevin" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'
 //With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
@@ -66,23 +79,115 @@ var gitClone = (repoUrl, callback) => {
 
 
 exports.getAuthors = (repoUrl, callback) => {
-  console.log('getAuthors');
+  console.log('[getAuthors]');
   let arguments = "--format='%aN' | sort -u";
   gitClone(repoUrl, (error, data, repoPath) => {
-    if (isRepoExist(data)) {
+    console.log('[getAuthors]: [gitClone]');
+    let json = '';
+    if (error) {
+      console.log('[getAuthors]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getAuthors]: [gitClone] [error] [isRepoExist(error)]');
+        gitLog(repoPath, arguments, (error, data) => {
+          json = stringToJsonArray(data);
+        });
+      }
+    } else {
       gitLog(repoPath, arguments, (error, data) => {
-        let json = stringToJsonArray(data);
-        callback(error, json);
-      });
-    } else { // assume clone is successful for now
-      gitLog(repoPath, arguments, (error, data) => {
-        let json = stringToJsonArray(data);
-        callback(error, json);
+        json = stringToJsonArray(data);
       });
     }
 
+    callback(error, json);
+
   });
 }
+
+exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
+  console.log('[getAuthorsAdditionsDeletions');
+  let arguments = "--format='%aN' | sort -u";
+  let json = '[';
+
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[getAuthorsAdditionsDeletions]: [gitClone]');
+
+    if (error) {
+
+      if (isRepoExist(error)) {
+
+        gitLog(repoPath, arguments, (error, data) => {
+          let authors = data.split('\n');
+          let commandArray = [];
+
+          for (var i = 0; i < authors.length; i++) {
+
+            //hopefull the first author isn't an empty line
+            if (authors[i].length === 0) {
+              break;
+            }
+
+            let command = `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf "\\"additions\\":%s,\\"deletions\\":%s\\n", inserted, deleted}'`;
+            console.log(command);
+            commandArray.push(command);
+          }
+
+          executive.quiet(commandArray, (err, stdout, stderr) => {
+            if (err) {
+              throw err;
+            }
+
+            console.log(stdout);
+            // for (var stats of stdouts) {
+            //   console.log(stats);
+            // }
+
+          });
+          // execSeries(commandArray, (err, stdouts, stderrs) => {
+          //   if (err) {
+          //     throw err;
+          //   }
+          //
+          //
+          //   for (var stats of stdouts) {
+          //     console.log(stats);
+          //   }
+          //
+          // });
+
+        });
+      }
+    } else {
+      console.log('[getAuthorsAdditionsDeletions]: [gitClone]: [isRepoExist true]');
+
+      gitLog(repoPath, arguments, (error, data) => {
+        let authors = data.split('\n');
+
+        for (var i = 0; i < authors.length; i++) {
+          arguments = `--shortstat --author='${authors[i]}' | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'`;
+          console.log(arguments);
+          //hopefull the first author isn't an empty line
+          if (authors[i].length === 0) {
+            break;
+          }
+
+          if (i) { //only append when it is not the first. hacky yet genius. credits to SO
+            json += (',');
+          }
+
+          gitLog(repoPath, arguments, (error, data) => {
+            json += `{name:${authors[i]} , ${data}}`;
+          });
+        }
+
+        json += ']';
+      });
+    }
+    console.log(json);
+    callback(error, json);
+
+  });
+}
+
 
 /*only accept \n delimited string*/
 var stringToJsonArray = (string) => {
@@ -106,26 +211,7 @@ var stringToJsonArray = (string) => {
   return json;
 }
 
-var gitLog = (repoPath, arguments, callback) => {
-  console.log('git log');
-  // start executing
-  let command = CHILD_PROCESS.exec(`cd ${repoPath} && git log ${arguments}`, function (error, stdout, stderr) {
-    if (error) {
-      console.log(error.stack);
-      console.log('Error code: ' + error.code);
-      console.log('Signal received: ' + error.signal);
-      callback(error, stdout);
-      return;
-    }
-    // success case
-    callback(error, stdout);
-  });
 
-  command.on('exit', function (code) {
-    console.log('Child process exited with exit code ' + code);
-  });
-
-}
 
 exports.gitBlame = (repoUrl, callback) => {
   var childProcess = require('child_process'),
