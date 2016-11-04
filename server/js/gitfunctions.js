@@ -93,15 +93,17 @@ exports.getAuthors = (repoUrl, callback) => {
         console.log('[getAuthors]: [gitClone] [error] [isRepoExist(error)]');
         gitLog(repoPath, arguments, (error, data) => {
           json = stringToJsonArray(data);
+          callback(error, json);
         });
       }
     } else {
       gitLog(repoPath, arguments, (error, data) => {
         json = stringToJsonArray(data);
+        callback(error, json);
       });
     }
 
-    callback(error, json);
+
 
   });
 }
@@ -213,18 +215,18 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
 var stringToJsonArray = (string) => {
   let arrayOfData = string.split('\n');
   let json = '[';
-  for (var i = 0; i < arrayOfData.length; i++) {
+  json += `{${arrayOfData[0]}}`
+
+  for (var i = 1; i < arrayOfData.length; i++) {
 
     //if every stdout produce a trailing empty line, then this equality check would have to stay
     if (arrayOfData[i].length === 0) {
       break;
     }
 
-    if (i) { //only append when it is not the first. hacky yet genius. credits to SO
-      json += (',');
-    }
+    json += (',');
 
-    console.log(arrayOfData[i]);
+    // console.log(arrayOfData[i]);
     json += `{${arrayOfData[i]}}`;
   }
   json += ']';
