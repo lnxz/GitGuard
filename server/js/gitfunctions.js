@@ -7,6 +7,9 @@ const CHILD_PROCESS = require('child_process');
 const execSeries = require('exec-series');
 const executive = require('executive');
 
+// turn off limits by default (BE CAREFUL)
+require('events').EventEmitter.prototype._maxListeners = 1000;
+
 // const shortlog = spawn('git', ['shortlog', '-n'], { stdio: ['inherit'] });
 //
 // ls.stdout.on('data', (data) => {
@@ -117,7 +120,9 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
 
         gitLog(repoPath, arguments, (error, data) => {
           let authors = data.split('\n');
+
           let commandArray = [];
+          // commandArray.push(`cd ${repoPath}`) //need to get into the repo first
 
           for (var i = 0; i < authors.length; i++) {
 
@@ -125,34 +130,34 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
             if (authors[i].length === 0) {
               break;
             }
+            // if (i) {
+            //   command += '&&'
+            // }
+            // command += `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf ""additions":%s,"deletions":%s\\n", inserted, deleted}'`;
 
-            let command = `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf "\\"additions\\":%s,\\"deletions\\":%s\\n", inserted, deleted}'`;
-            console.log(command);
+            let command = `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf "\\"name\\":\\"${authors[i]}\\",\\"additions\\":%i,\\"deletions\\":%i\\n", inserted, deleted}'`;
             commandArray.push(command);
           }
 
-          executive.quiet(commandArray, (err, stdout, stderr) => {
+
+          // // console.log(commandArray);
+          executive.parallel(commandArray, {
+            cwd: repoPath
+          }, (err, stdout, stderr) => {
             if (err) {
+              console.log(err)
               throw err;
             }
 
-            console.log(stdout);
-            // for (var stats of stdouts) {
-            //   console.log(stats);
-            // }
+            // console.log(stdout);
+            // let stats = stdout.split('\n')
+
+
+            let json = stringToJsonArray(stdout)
+            callback(error, json);
+
 
           });
-          // execSeries(commandArray, (err, stdouts, stderrs) => {
-          //   if (err) {
-          //     throw err;
-          //   }
-          //
-          //
-          //   for (var stats of stdouts) {
-          //     console.log(stats);
-          //   }
-          //
-          // });
 
         });
       }
@@ -162,29 +167,44 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
       gitLog(repoPath, arguments, (error, data) => {
         let authors = data.split('\n');
 
+        let commandArray = [];
+        // commandArray.push(`cd ${repoPath}`) //need to get into the repo first
+
         for (var i = 0; i < authors.length; i++) {
-          arguments = `--shortstat --author='${authors[i]}' | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'`;
-          console.log(arguments);
+
           //hopefull the first author isn't an empty line
           if (authors[i].length === 0) {
             break;
           }
+          // if (i) {
+          //   command += '&&'
+          // }
+          // command += `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf ""additions":%s,"deletions":%s\\n", inserted, deleted}'`;
 
-          if (i) { //only append when it is not the first. hacky yet genius. credits to SO
-            json += (',');
-          }
-
-          gitLog(repoPath, arguments, (error, data) => {
-            json += `{name:${authors[i]} , ${data}}`;
-          });
+          let command = `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf "\\"name\\":\\"${authors[i]}\\",\\"additions\\":%i,\\"deletions\\":%i\\n", inserted, deleted}'`;
+          commandArray.push(command);
         }
 
-        json += ']';
+
+        // // console.log(commandArray);
+        executive.parallel(commandArray, {
+          cwd: repoPath
+        }, (err, stdout, stderr) => {
+          if (err) {
+            console.log(err)
+            throw err;
+          }
+
+          // console.log(stdout);
+          // let stats = stdout.split('\n')
+
+
+          let json = stringToJsonArray(stdout)
+          callback(error, json);
+
+        });
       });
     }
-    console.log(json);
-    callback(error, json);
-
   });
 }
 
