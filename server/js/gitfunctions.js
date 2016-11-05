@@ -7,7 +7,8 @@ const CHILD_PROCESS = require('child_process');
 const executive = require('executive');
 
 // turn off limits by default (BE CAREFUL)
-require('events').EventEmitter.prototype._maxListeners = 1000;
+require('events')
+  .EventEmitter.prototype._maxListeners = 1000;
 
 // const shortlog = spawn('git', ['shortlog', '-n'], { stdio: ['inherit'] });
 //
@@ -101,9 +102,6 @@ exports.getAuthors = (repoUrl, callback) => {
         callback(error, json);
       });
     }
-
-
-
   });
 }
 
@@ -186,8 +184,6 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
           commandArray.push(command);
         }
 
-
-        // // console.log(commandArray);
         executive.parallel(commandArray, {
           cwd: repoPath
         }, (err, stdout, stderr) => {
@@ -195,10 +191,6 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
             console.log(err)
             throw err;
           }
-
-          // console.log(stdout);
-          // let stats = stdout.split('\n')
-
 
           let json = stringToJsonArray(stdout)
           callback(error, json);
@@ -209,92 +201,129 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
   });
 }
 
+exports.getAuthorsStability = (repoUrl, callback) => {
+    console.log('[getAuthorsStability]');
+    let command = ` git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\\((.*?)\\s+[\\d]{4}/; print $1,"\\n"' | sort -f | uniq -c | sort -n | awk '{ printf "\\"lines\\":\\"%s\\",\\"name\\":\\"%s\\"\\n", $1, $2}'`
 
-/*only accept \n delimited string*/
-var stringToJsonArray = (string) => {
-  let arrayOfData = string.split('\n');
-  let json = '[';
-  json += `{${arrayOfData[0]}}`
+    gitClone(repoUrl, (error, data, repoPath) => {
+        console.log('[getAuthorsStability]: [gitClone]');
 
-  for (var i = 1; i < arrayOfData.length; i++) {
+        if (error) {
+          console.log('[getAuthorsStability]: [gitClone] [error]');
+          if (isRepoExist(error)) {
+            console.log('[getAuthorsStability]: [gitClone] [error] [isRepoExist(error)]');
 
-    //if every stdout produce a trailing empty line, then this equality check would have to stay
-    if (arrayOfData[i].length === 0) {
-      break;
+            executeCommand(command, repoPath, (error, json) => {
+              callback(error, json);
+            })
+          }
+        } else {
+          executeCommand(command, repoPath, (error, json) => {
+            callback(error, json);
+          })
+        }
+      })
     }
 
-    json += (',');
+    var executeCommand = (command, repoPath, callback) => {
+        executive.quiet(command, {
+            cwd: repoPath
+          }, (error, stdout, stderr) => {
+            if (error) {
+              console.log(error)
+              throw error;
+            }
 
-    // console.log(arrayOfData[i]);
-    json += `{${arrayOfData[i]}}`;
-  }
-  json += ']';
-  return json;
-}
+            let json = stringToJsonArray(stdout)
+            callback(error, json);
+          })
+        }
 
+        /*only accept \n delimited string*/
+        var stringToJsonArray = (string) => {
+          let arrayOfData = string.split('\n');
+          let json = '[';
+          json += `{${arrayOfData[0]}}`
 
+          for (var i = 1; i < arrayOfData.length; i++) {
 
-exports.gitBlame = (repoUrl, callback) => {
-  var childProcess = require('child_process'),
-    gitblame;
+            //if every stdout produce a trailing empty line, then this equality check would have to stay
+            if (arrayOfData[i].length === 0) {
+              break;
+            }
 
-  gitblame = childProcess.exec(`cd ${REPOS_DIR+getRepoName(repoUrl)} && git blame -L:"Slot" scrapy/core/engine.py`, function (error, stdout, stderr) {
-    if (error) {
-      console.log(error.stack);
-      console.log('Error code: ' + error.code);
-      console.log('Signal received: ' + error.signal);
-    }
-    // console.log( 'Child Process STDOUT: ' + stdout );
-    //console.log( 'Child Process STDERR: ' + stderr );
-    callback(stdout);
-  });
+            json += (',');
 
-  gitblame.on('exit', function (code) {
-    console.log('Child process exited with exit code ' + code);
-  });
-}
-
-
-
-var showGitLog = () => {
-  exec(`cd repositories/github.com/vuejs/awesome-vue.git && git shortlog`, function (err, stdout, stderr) {
-    console.log(err);
-    console.log(stdout);
-    console.log(stderr);
-  });
-}
-
-var showGitBlame = () => {
+            // console.log(arrayOfData[i]);
+            json += `{${arrayOfData[i]}}`;
+          }
+          json += ']';
+          return json;
+        }
 
 
-}
 
-var getRepoName = (repoUrl) => {
-  let repoName = repoUrl;
+        exports.gitBlame = (repoUrl, callback) => {
+          var childProcess = require('child_process'),
+            gitblame;
 
-  if (repoName.startsWith(HTTPS, 0)) {
-    repoName = repoName.replace(HTTPS, '');
-  }
+          gitblame = childProcess.exec(`cd ${REPOS_DIR+getRepoName(repoUrl)} && git blame -L:"Slot" scrapy/core/engine.py`, function (error, stdout, stderr) {
+            if (error) {
+              console.log(error.stack);
+              console.log('Error code: ' + error.code);
+              console.log('Signal received: ' + error.signal);
+            }
+            // console.log( 'Child Process STDOUT: ' + stdout );
+            //console.log( 'Child Process STDERR: ' + stderr );
+            callback(stdout);
+          });
 
-  if (repoName.startsWith(HTTP, 0)) {
-    repoName = repoName.replace(HTTP, '');
-  }
+          gitblame.on('exit', function (code) {
+            console.log('Child process exited with exit code ' + code);
+          });
+        }
 
-  console.log(`repoUrl: ${repoUrl}`);
-  console.log(`RepoName: ${repoName}`);
 
-  return repoName;
-}
 
-// TODO: create a few more helper functions to determine download failure
+        var showGitLog = () => {
+          exec(`cd repositories/github.com/vuejs/awesome-vue.git && git shortlog`, function (err, stdout, stderr) {
+            console.log(err);
+            console.log(stdout);
+            console.log(stderr);
+          });
+        }
 
-/*this method is a hack. may fail if the library api changes its error message*/
-var isRepoExist = (reasonForFailure) => {
-  let errorMessage = reasonForFailure.toString();
-  return errorMessage.includes('exists and is not an empty directory');
-}
+        var showGitBlame = () => {
 
-// this.gitBlame( 'https://github.com/scrapy/scrapy.git' );
-// cloneRepo('https://github.com/scrapy/scrapy.git');
-// cloneRepo('https://github.com/vuejs/awesome-vue.git');
-// showGitLog();
+
+        }
+
+        var getRepoName = (repoUrl) => {
+          let repoName = repoUrl;
+
+          if (repoName.startsWith(HTTPS, 0)) {
+            repoName = repoName.replace(HTTPS, '');
+          }
+
+          if (repoName.startsWith(HTTP, 0)) {
+            repoName = repoName.replace(HTTP, '');
+          }
+
+          console.log(`repoUrl: ${repoUrl}`);
+          console.log(`RepoName: ${repoName}`);
+
+          return repoName;
+        }
+
+        // TODO: create a few more helper functions to determine download failure
+
+        /*this method is a hack. may fail if the library api changes its error message*/
+        var isRepoExist = (reasonForFailure) => {
+          let errorMessage = reasonForFailure.toString();
+          return errorMessage.includes('exists and is not an empty directory');
+        }
+
+        // this.gitBlame( 'https://github.com/scrapy/scrapy.git' );
+        // cloneRepo('https://github.com/scrapy/scrapy.git');
+        // cloneRepo('https://github.com/vuejs/awesome-vue.git');
+        // showGitLog();
