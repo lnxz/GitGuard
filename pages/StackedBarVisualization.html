@@ -1,0 +1,216 @@
+<html>
+<style>
+
+.body { font: 12px Arial;}
+.bar {
+	fill: steelblue;
+}
+
+.axis path {
+	display: none;
+}
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+</style>
+<head>
+	<title> Top 10 Addition/Deletions </title>
+	<script src="./js/d3.min.js"></script>
+</head>
+<body>
+	<div align="left">
+		<h1> Top 10 contributions to project (additions/deletions) </h1>
+		<div id="chart">
+		</div>
+	</div>
+	<div id="viz"></div>
+	<svg id="stacked" width="800" height="500"></svg>
+	<script src="js/d3-tip.js"></script>
+	<script>
+
+	//Retrieve JSON data
+	var url = "https://api.github.com/repos/tungnk1993/scrapy/stats/contributors";
+	d3.json(url, function(response) {
+		var authorArray = new Array(response.length).fill(0);
+		var addArray = new Array(response.length).fill(0);
+		var delArray = new Array(response.length).fill(0);
+		var combineArray = new Array(response.length).fill(0);
+
+		// Placeholder for user array
+		var usersArray = new Array(response.length).fill(0);
+
+		for (var i = 0; i < response.length; i++) {
+			var item = response[i];
+
+			authorArray[i] = item.author.login;
+
+			// Placeholder for selecting users
+			if(i < 20){
+				usersArray[i] =item.author.login;
+			}
+
+			var weeks = item.weeks.length;
+			var adds = 0;
+			var dels = 0;
+
+			var weeksData = new Array(weeks).fill(0);
+			weeksData = item.weeks;
+
+			for (var x = 0; x <= weeks - 1; x++) {
+				var weekItem = weeksData[x];
+				addArray[i] += weekItem.a;
+				delArray[i] += weekItem.d;
+			};
+		};
+
+		for (var y = 0; y <= response.length; y++) {
+			combineArray[y] = addArray[y] + delArray[y]
+		};
+
+		var dataArr = [];
+		for (var i = 0; i < response.length; i++) {
+			var obj = {
+				name: authorArray[i],
+				additions: addArray[i],
+				deletions: delArray[i],
+				total: combineArray[i]
+			};
+			dataArr.push(obj);
+		}
+
+		dataArr.sort(function(a, b) {
+			return b.total - a.total;
+		});
+
+		var data = [];
+		for (var i =0; i < response.length; i ++)
+		{
+			for (var j = 0; j < usersArray.length; j ++ )
+			{
+				if(authorArray[i] == usersArray[j])
+				{
+					data.push(dataArr[i]);
+				}
+			}
+		}
+
+
+
+		var svg = d3.select("svg"),
+		margin = {top: 20, right: 20, bottom: 100, left: 40},
+		width = +svg.attr("width") - margin.left - margin.right,
+		height = +svg.attr("height") - margin.top - margin.bottom,
+		g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		var x = d3.scaleBand()
+		.rangeRound([0, width])
+		.padding(0.1)
+		.align(0.1);
+
+		var y = d3.scaleLinear()
+		.rangeRound([height, 0]);
+
+		var z = d3.scaleOrdinal()
+		.range(["#f64e4e", "#a8d6aa"]);
+
+		var stack = d3.stack();
+		var tip = d3.tip()
+			.attr("class", "d3-tip")
+			.offset([0, 10])
+
+			.html(function(d) { return "<strong>Name: " + d.data.name + "</strong><br/> Additions: " + d.data.additions + " <br/> Deletions:" + d.data.deletions ; });
+			svg.call(tip);
+
+		for (var num = 0; num < data.length; num++) {
+			x.domain(data.map(function(d) { return d.name; }));
+			y.domain([0, d3.max(data, function(d) { return d.total; })]).nice();
+			z.domain([ "additions", "deletions" ]);
+
+
+
+			g.selectAll(".serie")
+			.data(stack.keys([ "deletions", "additions" ])(data))
+			.enter().append("g")
+			.attr("class", "serie")
+			.attr("fill", function(d) { return z(d.key); })
+			.selectAll("rect")
+			.data(function(d) { return d; })
+			.enter().append("rect")
+			.attr("x", function(d) { return x(d.data.name); })
+			.attr("y", function(d) { return y(d[1]); })
+			.attr("height", function(d) { return y(d[0]) - y(d[1]); })
+			.attr("width", x.bandwidth())
+			.on('mouseover', tip.show)
+	    .on('mouseout', tip.hide)
+
+			g.append("g")
+				.attr("class", "axis axis--x")
+				.attr("transform", "translate(0," + height + ")")
+				.call(d3.axisBottom(x))
+				.selectAll("text")
+				 .style("text-anchor", "end")
+				 //.style("font", "14px")
+				 //.attr("dx", "-.8em")
+				 //.attr("dy", ".15em")
+				 .attr("transform", "rotate(-60)");;
+
+			g.append("g")
+			.attr("class", "axis axis--y")
+			.call(d3.axisLeft(y).ticks(5, "s"))
+			.append("text")
+			.attr("x", 2)
+			.attr("y", y(y.ticks(10).pop()))
+			.attr("dy", "0.35em")
+			.attr("text-anchor", "start")
+			.attr("fill", "#000")
+			.text("Additions/Deletions");
+
+			var legend = g.selectAll(".legend")
+			.data([ "additions", "deletions" ])
+			.enter().append("g")
+			.attr("class", "legend")
+			.attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
+			.style("font", "10px sans-serif");
+
+			legend.append("rect")
+			.attr("x", width - 18)
+			.attr("width", 18)
+			.attr("height", 18)
+			.attr("fill", z);
+
+			legend.append("text")
+			.attr("x", width - 24)
+			.attr("y", 9)
+			.attr("dy", ".35em")
+			.attr("text-anchor", "end")
+			.text(function(d) { return d; });
+		}
+	});
+	</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+
+td, th {
+    padding: 1px 4px;
+}
+
+</style>
+<body>
+
+<!-- load the d3.js library -->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+//git log --format='%aN' | sort -u
+//get all authors
+//for each author, do the next command to get json obj
+
+//git log --shortstat --author="Bevin" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'
+//With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
+//insert into data.members array
+
+var data = {
+  "members": [
+    {name: "name1", additions:"40", deletions:"30"},
+    {name: "name2", additions:"30", deletions:"20"},
+    {name: "name3", additions:"20", deletions:"30"},
+    {name: "name4", additions:"30", deletions:"60"},
+    {name: "name5", additions:"40", deletions:"40"},
+    {name: "name6", additions:"10", deletions:"20"},
+    {name: "name7", additions:"30", deletions:"40"}
+  ]
+};
+
+//git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\((.*?)\s+[\d]{4}/; print $1,"\n"' | sort -f | uniq -c | sort -n
+//Lists out all authors + number of lines of codes still persistant in latest version
+
+var dataPersist = {
+  "members": [
+    {lines:"10", name:"name1"},
+    {lines:"11", name:"name2"},
+    {lines:"12", name:"name3"},
+    {lines:"15", name:"name6"},
+    {lines:"13", name:"name4"},
+    {lines:"14", name:"name5"},
+    {lines:"12", name:"name7"}
+  ]
+}
+var linePerArr = [];
+for (var i = 0; i < data.members.length; i++) {
+  for (var j = 0; j < dataPersist.members.length; j++) {
+    if(dataPersist.members[j].name == data.members[i].name)
+    {
+      linePerArr[i] =  parseFloat(dataPersist.members[j].lines);
+    }
+  }
+}
+var dataArr = [];
+for (var i = 0; i < data.members.length; i++) {
+  var obj = {
+    Name: data.members[i].name,
+    additions: parseFloat(data.members[i].additions),
+    deletions: parseFloat(data.members[i].deletions),
+    LinesPersist: linePerArr[i],
+    Stability: linePerArr[i]*100/(parseFloat(data.members[i].additions)+parseFloat(data.members[i].deletions))
+  };
+  dataArr.push(obj);
+}
+
+console.log(dataArr);
+
+
+// The table generation function
+function tabulate(data, columns) {
+    var table = d3.select("body").append("table")
+            .attr("style", "margin-left: 400px"),
+        thead = table.append("thead"),
+        tbody = table.append("tbody");
+
+    // append the header row
+    thead.append("tr")
+        .selectAll("th")
+        .data(columns)
+        .enter()
+        .append("th")
+            .text(function(column) { return column});
+
+    // create a row for each object in the data
+    var rows = tbody.selectAll("tr")
+        .data(data)
+        .enter()
+        .append("tr");
+
+    // create a cell in each row for each column
+    var cells = rows.selectAll("td")
+        .data(function(row) {
+            return columns.map(function(column) {
+                return {column: column, value: row[column]};
+            });
+        })
+        .enter()
+        .append("td")
+        .attr("style", "font-family: Courier") // sets the font style
+            .html(function(d) { return d.value; });
+
+    return table;
+}
+
+// render the table
+ var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
+
+</script>
+</body>
