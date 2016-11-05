@@ -213,19 +213,55 @@ exports.getAuthorsStability = (repoUrl, callback) => {
           if (isRepoExist(error)) {
             console.log('[getAuthorsStability]: [gitClone] [error] [isRepoExist(error)]');
 
-            executeCommand(command, repoPath, (error, json) => {
+            executeCommand(command, repoPath, (error, data) => {
+              let json = stringToJsonArray(data)
               callback(error, json);
             })
+          } else{
+            callback(error, ''); //sends nothin
           }
+
         } else {
-          executeCommand(command, repoPath, (error, json) => {
+          executeCommand(command, repoPath, (error, data) => {
+            let json = stringToJsonArray(data)
             callback(error, json);
           })
         }
       })
     }
 
+    exports.getAuthorsCommits = (repoUrl, authorName, callback) => {
+        console.log('[getAuthorsCommits]');
+        let command = ` git --no-pager log --author=${authorName} --date=short  --pretty=format:\'{%n  111555commit666222: 111555%H666222,%n  111555author666222: 111555%an <%ae>666222,%n  111555date666222: 111555%ad666222},\'     $@ | sed \'s\/\"\/\\\\\"\/g\' |  sed \'s\/111555\/\"\/g\' | sed \'s\/666222\/\"\/g\' | perl -pe \'BEGIN{print \"[\"}; END{print \"]\\n\"}\' | perl -pe \'s\/},]\/}]\/\'\r\n`
+
+        gitClone(repoUrl, (error, data, repoPath) => {
+            console.log('[getAuthorsCommits]: [gitClone]');
+
+            if (error) {
+              console.log('[getAuthorsCommits]: [gitClone] [error]');
+              if (isRepoExist(error)) {
+                console.log('[getAuthorsCommits]: [gitClone] [error] [isRepoExist(error)]');
+
+                executeCommand(command, repoPath, (error, json) => {
+                  // jiafeng's command already format swee swee
+                  callback(error, json);
+                })
+              } else{
+                callback(error, ''); //sends nothin
+              }
+
+            } else {
+              executeCommand(command, repoPath, (error, json) => {
+                // jiafeng's command already format swee swee
+                callback(error, json);
+              })
+            }
+          })
+        }
+
+
     var executeCommand = (command, repoPath, callback) => {
+      console.log(`[executeCommand]: ${command}`)
         executive.quiet(command, {
             cwd: repoPath
           }, (error, stdout, stderr) => {
@@ -233,9 +269,7 @@ exports.getAuthorsStability = (repoUrl, callback) => {
               console.log(error)
               throw error;
             }
-
-            let json = stringToJsonArray(stdout)
-            callback(error, json);
+            callback(error, stdout);
           })
         }
 

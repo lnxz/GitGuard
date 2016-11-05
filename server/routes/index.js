@@ -22,13 +22,34 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
 
 });
 
-/* GET all authors addition deletion */
+/* GET all authors stability */
 router.get('/authorsStability', function (req, res, next) {
   gitfunctions.getAuthorsStability('https://github.com/scrapy/scrapy.git', (error, data) => {
 
     res.status(200)
       .send(data);
   });
+
+});
+
+/* GET all authors stability */
+router.get('/commits', function (req, res, next) {
+  let repoUrl = req.query.repo
+  let authorName = req.query.author
+
+  // this equality check is not safe
+  if(repoUrl != null && authorName != null){
+    console.log(repoUrl)
+    console.log(authorName)
+    gitfunctions.getAuthorsCommits(repoUrl, authorName, (error, data) => {
+      res.status(200)
+        .send(data);
+    });
+  } else{
+    res.status(200)
+      .send('');
+  }
+
 
 });
 
