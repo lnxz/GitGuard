@@ -4,7 +4,6 @@ const REPOS_DIR = 'repositories/';
 let repoPath = REPOS_DIR + '';
 
 const CHILD_PROCESS = require('child_process');
-const execSeries = require('exec-series');
 const executive = require('executive');
 
 // turn off limits by default (BE CAREFUL)
