@@ -11905,6 +11905,11 @@ var varDangraJSON = [{
   "author": "Daniel Grana <dangra@gmail.com>",
   "date": "2009-05-04"}]
 
+var twoPersonData = [
+  { "email": "dangra@gmail.com"},
+  { "email": "pablo@pablohoffman.com"}
+]
+
 	$('ul.sidebar-nav li').click(function(e) {
 		loadRepo($(this).find("a").text());
 	});
@@ -11912,13 +11917,9 @@ var varDangraJSON = [{
 	//Load repo members, add to names array
 	var names = new Array();
 
-	var localJson = "jsonData/twoperson.json";//all emails of members, name might not be unique
-
-	d3.json(localJson, function(response) {//read json from email.json. name might not be unique, all code below wrap in d3.json
-		
-		for(var i=0;i<response.length;i++)
+		for(var i=0;i<twoPersonData.length;i++)
 		{
-			names[i] = response[i].email;
+			names[i] = twoPersonData[i].email;
 		}
 
 		names.forEach(function(item) {
@@ -11966,368 +11967,205 @@ var varDangraJSON = [{
 			loadVisualizations();
 			}
 		});
-	});
 
-	var old_array=[];
-	var svg = d3.select("svg"),
-					margin = {top: 20, right: 80, bottom: 30, left: 50},
-					width = svg.attr("width") - margin.left - margin.right,
-					height = svg.attr("height") - margin.top - margin.bottom,
-					g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-	var parseTime = d3.timeParse("%d-%b-%y");
-	var dateFn=function(d) { return d.date }
-	var commitFn=function(d) { return d.commit }
-		
-	var x;
-	var y;
+  function jsonDataFrom(email,TypeOfFormat){
+    var rawData; var formatedData;
+    if(email.toString()==="dangra@gmail.com"){
+        rawData = varDangraJSON;}
+    else if(email.toString()==="pablo@pablohoffman.com"){
+        rawData = varPablohoffmanJSON;}
+    
+    rawData.sort(function(a,b){var c = new Date(a.date);var d = new Date(b.date);return c-d;});
+    //console.log(rawData);
 
+    if(TypeOfFormat==1)//day per commit
+    {formatedData = commitPerDay(rawData,email);}
+    
+    if(TypeOfFormat==2)//month per commit looks werid
+    {formatedData = commitPerMonth(rawData,email);}
 
-	var storeAllData;
-	var virgin=true;
+    return formatedData;        
+  
+    function commitPerDay(rawData,email){
 
+        var parseTime = d3.time.format("%d-%b-%y");
+			  var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var xyData=[];
+        var finalData=[];
+        var firstCommitDate = reconstructRawDate(new Date(rawData[0].date));
+        var lastCommitDate = reconstructRawDate(new Date(rawData[rawData.length-1].date));
+        //console.log(firstCommitDate +"----------------"+ lastCommitDate +"----------------"+ email );
+        function reconstructRawDate(dateObj){ //accept date object return parsedFormat of date
+          var itemDateMthYearCombine = dateObj.getDate() + "-" + MONTH[dateObj.getMonth()]  + "-" + dateObj.getFullYear().toString().substr(2,2);  
+          //console.log(itemDateMthYearCombine);
+          return parseTime.parse(itemDateMthYearCombine);}
+        xyData = setData(firstCommitDate,lastCommitDate);
+        function setData(start, end) { //can add in commit key here eg,c041328b45dfb062217dbe65848304a41ef3a576
+          var array=[];
+          var startDate = new Date(start);
+          var i=0;
+          var stringItem={};
+          while (startDate <= end) {
+           // stringItem=jsonConcat(stringItem,{x:reconstructRawDate(startDate) ,y:0});
+            //stringItem+= $.extend(stringItem, {x:reconstructRawDate(startDate) ,y:0});
 
-	function loadVisualizations() {
-		var selected = new Array();
-		
-		var i = 0;
-		$('.ms-selection > .ms-list li').each(function() {
-			if ($(this).css('display') != 'none') {
-				selected[i] = $(this).text();
-				i++;	
-			}
-		});
-		var diff = arr_diff(old_array,selected);
+            array.push({"x":reconstructRawDate(startDate) ,"y":0});
 
-		if(old_array.length<selected.length){//gt new item
-			old_array.push(diff[0]);
-			console.log(diff + " added");
-			if(virgin)
-			{
+            for(;i<rawData.length;i++){
+              //console.log(reconstructRawDate(new Date(rawData[i].date)).toString()+ " --------------"+array[array.length-1].x.toString())
+              if(reconstructRawDate(new Date(rawData[i].date)).toString()===array[array.length-1].x.toString()){ //same date
+                array[array.length-1].y = parseInt(array[array.length-1].y)+1; //increment by 1 commit
+              }
+              else{
 
-				virgin = false;
-				setUpAndAddLine(diff);
-			}
-			else{
-				addLine(diff);
-			}
-		}
-		else if(old_array.length==selected.length){//this wont happen
-		
+                break;
+              }
 
-		}
-		else if(old_array.length>selected.length){//some item removed
-			
+            }
 
-			for(var x=0;x<diff.length;x++)
-			{
-				var index = old_array.indexOf(diff[x]); //find the index of the element you want to remove
-				if (index > -1) {old_array.splice(index, 1);} //Then remove it 	
-				console.log(diff[x] + " removed");	
-				removeLine(diff);	
-			}
-		}
-		
-	function setUpAndAddLine(emailAddress){
-		var currentJson;
-		if(emailAddress.toString()==="dangra@gmail.com")			
-		{
-			currentJson = varDangraJSON;
-		}
-		else if(emailAddress.toString()==="pablo@pablohoffman.com")
-		{
-			currentJson = varPablohoffmanJSON;
-		}
-		var data = currentJson.slice();
-		var filteredData = filterData(data); //commit per day or a single contributor
-		
+            startDate.setDate(startDate.getDate() + 1);
+          }
+          
+          console.log(array);
+          return array;}
+                		
+        
+        finalData.push({
+            "key":email,
+            "values":xyData});
+        return finalData;}
+    function commitPerMonth(rawData,email){
 
+          var parseTime = d3.time.format("%b-%y");
+          var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          var xyData=[];
+          var finalData=[];
+          var firstCommitMonth = reconstructRawMonth(new Date(rawData[0].date));
+          var lastCommitMonth = reconstructRawMonth(new Date(rawData[rawData.length-1].date));
+          // console.log(firstCommitMonth +"----------------"+ lastCommitMonth +"----------------"+ email );
+          function reconstructRawMonth(dateObj){ //accept date object return parsedFormat of date
+            var itemDateMthYearCombine = MONTH[dateObj.getMonth()]  + "-" + dateObj.getFullYear().toString().substr(2,2);  
+            //console.log(itemDateMthYearCombine);
+            return parseTime.parse(itemDateMthYearCombine);}
+          xyData = setData(firstCommitMonth,lastCommitMonth);
+          function setData(start, end) { //can add in commit key here eg,c041328b45dfb062217dbe65848304a41ef3a576
+            var array=[];
+            var startDate = new Date(start);
+            var i=0;
+            while (startDate <= end) {
+              array.push({"x":reconstructRawMonth(startDate) ,"y":'0'});
+              for(;i<rawData.length;i++){
+                //console.log(reconstructRawDate(new Date(rawData[i].date)).toString()+ " --------------"+array[array.length-1].x.toString())
+                if(reconstructRawMonth(new Date(rawData[i].date)).toString()===array[array.length-1].x.toString()){ //same date
+                  array[array.length-1].y = parseInt(array[array.length-1].y)+1; //increment by 1 commit
+                }
+                else{
 
-		//var x = d3.scaleTime().rangeRound([0, width]).domain(d3.extent(filteredData, function(d) { return d.date }));
-		//var y = d3.scaleLinear().rangeRound([height, 0]).domain(d3.extent(filteredData, function(d) { return d.commit }));
+                  break;
+                }
 
-		x = d3.scaleTime().rangeRound([0, width]).domain(d3.extent(filteredData, dateFn));
-		y = d3.scaleLinear().rangeRound([height, 0]).domain(d3.extent(filteredData, commitFn));
+              }
 
-						g.append("g")
-						.attr("class", "axis axis--x")
-						.attr("transform", "translate(0," + height + ")")
-						.call(d3.axisBottom(x));
+              startDate.setDate(startDate.getDate() + 1);
+            }
+            return array;}
+                      
+          
+          finalData.push(
+            {
+              "values":xyData,
+              "key":email
+            }
+          );
+          return finalData;}
 
-						g.append("g")
-						.attr("class", "axis axis--y")
-						.call(d3.axisLeft(y))
-						.append("text")
-						.attr("fill", "#000")
-						.attr("transform", "rotate(-90)")
-						.attr("y", 6)
-						.attr("dy", "0.71em")
-						.style("text-anchor", "end")
-						.text("Commits");
+  }
+  function loadVisualizations() {
+      var selected = new Array();
+      var selectedData=[];
+      var i = 0;
+      $('.ms-selection > .ms-list li').each(function() {
+        if ($(this).css('display') != 'none') {
+          selected[i] = $(this).text();
+          var email=  selected[i];
+          i++;	
+          selectedData.push(jsonDataFrom(email,1));
+          //selectedData= jsonConcat(selectedData,jsonDataFrom(email,1));
+        }
+      });
+      
+      plotChart(selected,selectedData);
+  }
+  function plotChart(selected,selectedData){
+      nv.addGraph(function() {
+              var chart = nv.models.lineWithFocusChart();
 
-		g.append("path").datum(filteredData).attr("class", "line").attr("d", d3.line().x(function(d) { return x(d.date); }).y(function(d) { return y(d.commit); }));
-	}
-	function removeLine(emailAddress){
+              chart.brushExtent([50,70]);
 
-	}	
-	function addLine(emailAddress){
-		var currentJson;
-		if(emailAddress.toString()==="dangra@gmail.com")			
-		{
-			currentJson = varDangraJSON;
-		}
-		else if(emailAddress.toString()==="pablo@pablohoffman.com")
-		{
-			currentJson = varPablohoffmanJSON;
-		}
-		var data = currentJson.slice();
-		var filteredData = filterData(data); //commit per day or a single contributor
+              //chart.xAxis.tickFormat(d3.format(',f')).axisLabel("Stream - 3,128,.1");
+              chart.xAxis.axisLabel('Date').tickFormat(function(d) { return d3.time.format('%d-%b-%y')(new Date(d)); });
+              chart.x2Axis.axisLabel('Date').tickFormat(function(d) { return d3.time.format('%d-%b-%y')(new Date(d)); });
 
+              chart.yTickFormat(d3.format(""));
 
-		var oldEmail = old_array[old_array.length-1];
-		var oldJson;
-		if(oldEmail==="dangra@gmail.com")
-		{
-			oldJson = varDangraJSON;	
-		}
-		else if(emailAddress.toString()==="pablo@pablohoffman.com")
-		{
-			oldJson = varPablohoffmanJSON;	
-		}
-		var prevData = currentJson.slice();
-		var prevFilteredData = filterData(data); 
+              chart.useInteractiveGuideline(true);
+              d3.select('#chart svg')
+                  .datum(selectedData[0])
+                  .call(chart);
+                  testData1();
+              nv.utils.windowResize(chart.update);
 
-		
-		x = d3.scaleTime().rangeRound([0, width]).domain(d3.extent(filteredData, dateFn));
-		y= d3.scaleLinear().rangeRound([height, 0]).domain(d3.extent(filteredData, commitFn));
-		
-		
-
-
-		
-
-		g.append("path").datum(filteredData)
-		.attr("class", "line")
-		.attr("d", d3.line().x(function(d) { return x(d.date); }).y(function(d) { return y(d.commit); }));
-
-	
-	}
-	function arr_diff (a1, a2) {
-		var a = [], diff = [];
-
-		for (var i = 0; i < a1.length; i++) {
-			a[a1[i]] = true;
-		}
-
-		for (var i = 0; i < a2.length; i++) {
-			if (a[a2[i]]) {
-				delete a[a2[i]];
-			} else {
-				a[a2[i]] = true;
-			}
-		}
-
-		for (var k in a) {
-			diff.push(k);
-		}
-
-    	return diff;};
-	
-	function summaryLineChartPlot(jsonData){
-			
-				var svg = d3.select("svg"),
-					margin = {top: 20, right: 80, bottom: 30, left: 50},
-					width = svg.attr("width") - margin.left - margin.right,
-					height = svg.attr("height") - margin.top - margin.bottom,
-					g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-				var parseTime = d3.timeParse("%d-%b-%y");
-
-				var x = d3.scaleTime()
-					.rangeRound([0, width]);
-
-				var y = d3.scaleLinear()
-					.rangeRound([height, 0]);
-
-				var line = d3.line()
-					.x(function(d) { return x(d.date); })
-					.y(function(d) { return y(d.commit); });
-
-				var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-				var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
-
-				var data = [];
-
-				d3.json(jsonData, function(response) {
-					
-					for (var i = 0; i < response.length; i++){ 
-							var item = response[i];
-							var itemDate= new Date(item.date);
-							//2-May-07
-							var itemCurrentDate= itemDate.getDate();
-							var itemCurrentMonth = itemDate.getMonth();
-							var itemCurrentYear = itemDate.getFullYear();
-							itemCurrentYear = itemCurrentYear.toString().substr(2,2);
-							var itemDateMthYearCombine = itemCurrentDate + "-" +MONTH[itemCurrentMonth] + "-" + itemCurrentYear;
-							//var itemLocation=containsObject(parseTime(itemDateMthYearCombine) , data);
-							var itemLocation=containsObject(parseTime(itemDateMthYearCombine), itemCurrentMonth,itemCurrentYear, data );
-
-							
-							if(itemLocation==-1) //gt no common date, add new date SEPERATE BY DAY
-							{                
-								data.push(
-									{
-									'date' : itemCurrentDate,
-									'month' : itemCurrentMonth,
-									'year' : itemCurrentYear,
-									'date' : parseTime(itemDateMthYearCombine),
-									'commit' : '1'
-									});
-							}//gt existing date liao, increment commit
-							else 
-							{        
-								data[itemLocation].commit = parseInt(data[itemLocation].commit) +1;
-							}
-					}
-					data = data.sort(sortByDateAscending);
+              return chart;
+          });
+      function testData1() {
+        var array=[];
+        array.push(
+        {
+            "values": [{x:new Date("2050/9/3"),y:2},{x:new Date("2009/10/3"),y:2},{x:new Date("2010/11/3"),y:2}],
+            "key": "Email1"
+        }
+        
+        );
+        console.log(array[0].values);
+        array.push(
+        {
+            "values": [{x:new Date("1994/7/3"),y:3},{x:new Date("2009/3/3"),y:3},{x:new Date("2050/2/3"),y:4}],
+            "key": "Email12"
+        }
+        );
+        return array;
+      }
+      function testData2() {
+        return [
+        {
+            "values": [{x:new Date("2008/9/3"),y:2},{x:new Date("2009/10/3"),y:2},{x:new Date("2010/11/3"),y:2}],
+            "key": "Email1"
+        },
+        {
+            "values": [{x:new Date("2000/7/3"),y:3},{x:new Date("2009/3/3"),y:3},{x:new Date("2050/2/3"),y:4}],
+            "key": "Email12"
+        }]
+      }
+        
 
 
-					console.log( "data : "+data);
+      
+      
+          
 
-				x.domain(d3.extent(data, function(d) { return d.date; }));
-				y.domain(d3.extent(data, function(d) { return d.commit; }));
-				
+   
 
-				g.append("g").attr("class", "axis axis--x").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x));
-				g.append("g").attr("class", "axis axis--y").call(d3.axisLeft(y)).append("text").attr("fill", "#000").attr("transform", "rotate(-90)").attr("y", 6).attr("dy", "0.71em").style("text-anchor", "end").text("Commits");
-				g.append("path").datum(data).attr("class", "line").attr("d", line);
-
-
-			});
-			function sortByDateAscending(a, b) {
-				// Dates will be cast to numbers automagically:
-				return a.date - b.date;
-			}
-			function containsObject(shortDate,obj,obj2, list) {
-				var i;
-				var itemLocation=-1;
-				for (i = 0; i < list.length; i++) {
-					
-					// if (list[i].date.toString() === shortDate.toString()) {
-					//    return itemLocation=i;
-					// }
-					
-					if (list[i].month.toString() === obj.toString() && list[i].year.toString() === obj2.toString()) { 
-					// if month and year match
-						return itemLocation=i;
-					}
-				}
-
-				return itemLocation;
-			}
-			function checkDay(day1, day2){
-				return (day1==day2);
-			}
-			function checkMonth(month1, month2){
-				return (month1==month2);
-			}
-			function checkYear(year1, year2){
-				return (year1==year2);
-			}
-			function compare(integer1, integer2){
-				if(integer1>integer2)
-				{
-				return integer1;
-				}
-				else
-				{
-				return integer2;
-				}
-			}
-			function monthDiff(d1, d2){
-				var months;
-				months = (d2.getFullYear() - d1.getFullYear()) * 12;
-				months -= d1.getMonth() + 1;
-				months += d2.getMonth();
-				// edit: increment months if d2 comes later in its month than d1 in its month
-				if (d2.getDate() >= d1.getDate())
-					months++
-				// end edit
-				return months <= 0 ? 0 : months;
-			}
-
-
-
-			console.log("data: line 241 : " + data);
-			
-		}}
-	function filterData(rawData){
-			var parseTime = d3.timeParse("%d-%b-%y");
-			var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-			var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
-			var filteredData = [];
-			for (var i = 0; i < rawData.length; i++){ 
-				var item = rawData[i];
-				var itemDate= new Date(item.date);
-				//2-May-07
-				var itemCurrentDate= itemDate.getDate();
-				var itemCurrentMonth = itemDate.getMonth();
-				var itemCurrentYear = itemDate.getFullYear();
-				itemCurrentYear = itemCurrentYear.toString().substr(2,2);
-				var itemDateMthYearCombine = itemCurrentDate + "-" +MONTH[itemCurrentMonth] + "-" + itemCurrentYear;
-				//var itemLocation=containsObject(parseTime(itemDateMthYearCombine) , filteredData);
-				var itemLocation=containsObject(parseTime(itemDateMthYearCombine), itemCurrentMonth,itemCurrentYear, filteredData );
-
-							
-				if(itemLocation==-1) //gt no common date, add new date SEPERATE BY DAY
-				{                
-					filteredData.push(
-					{
-						'date' : itemCurrentDate,
-						'month' : itemCurrentMonth,
-						'year' : itemCurrentYear,
-						'date' : parseTime(itemDateMthYearCombine),
-						'commit' : '1'
-					});
-				}//gt existing date liao, increment commit
-				else 
-				{        
-					filteredData[itemLocation].commit = parseInt(filteredData[itemLocation].commit) +1;
-				}
-			}
-			filteredData = filteredData.sort(sortByDateAscending);
-			return filteredData;
-		}
-	function containsObject(shortDate,obj,obj2, list){
-			var i;
-			var itemLocation=-1;
-			for (i = 0; i < list.length; i++) {
-				
-				// if (list[i].date.toString() === shortDate.toString()) {
-				//    return itemLocation=i;
-				// }
-				
-				if (list[i].month.toString() === obj.toString() && list[i].year.toString() === obj2.toString()) { 
-				// if month and year match
-					return itemLocation=i;
-				}
-			}
-
-			return itemLocation;
-		}
+  }
+   
+  
 	
 	
 	
 	
 	
-	
-	function sortByDateAscending(a, b){
-				// Dates will be cast to numbers automagically:
-				return a.date - b.date;
-			}
+
 	function loadRepo(e){
 		$('#title').html(e);}
-
-
 
 
 
