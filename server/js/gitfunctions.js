@@ -83,7 +83,7 @@ var gitLog = (repoPath, arguments, callback) => {
 
 exports.getAuthors = (repoUrl, callback) => {
   console.log('[getAuthors]');
-  let arguments = "--format='%aN' | sort -u";
+  let command = `git --no-pager log --pretty=format:\"\\\"name\\\":\\\"%an\\\",\\\"email\\\":\\\"%ae\\\"\" | sort -u`;
   gitClone(repoUrl, (error, data, repoPath) => {
     console.log('[getAuthors]: [gitClone]');
     let json = '';
@@ -91,10 +91,11 @@ exports.getAuthors = (repoUrl, callback) => {
       console.log('[getAuthors]: [gitClone] [error]');
       if (isRepoExist(error)) {
         console.log('[getAuthors]: [gitClone] [error] [isRepoExist(error)]');
-        gitLog(repoPath, arguments, (error, data) => {
-          json = stringToJsonArray(data);
+
+        executeCommand(command, repoPath, (error, data) => {
+          let json = stringToJsonArray(data)
           callback(error, json);
-        });
+        })
       }
     } else {
       gitLog(repoPath, arguments, (error, data) => {
@@ -305,6 +306,7 @@ var executeCommand = (command, repoPath, callback) => {
 
 /*only accept \n delimited string*/
 var stringToJsonArray = (string) => {
+
   let arrayOfData = string.split('\n');
   let json = '[';
   json += `{${arrayOfData[0]}}`
