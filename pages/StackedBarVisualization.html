@@ -40,7 +40,8 @@
 </style>
 <head>
 	<title> Top 10 Addition/Deletions </title>
-	<script src="./js/d3.min.js"></script>
+	<script src="../js/d3.min.js"></script>
+	<script src="../js/d3-tip.js"></script>
 </head>
 <body>
 	<div align="left">
@@ -50,7 +51,7 @@
 	</div>
 	<div id="viz"></div>
 	<svg id="stacked" width="800" height="500"></svg>
-	<script src="js/d3-tip.js"></script>
+
 	<script>
 
 	//Retrieve JSON data
@@ -150,8 +151,6 @@
 			x.domain(data.map(function(d) { return d.name; }));
 			y.domain([0, d3.max(data, function(d) { return d.total; })]).nice();
 			z.domain([ "additions", "deletions" ]);
-
-
 
 			g.selectAll(".serie")
 			.data(stack.keys([ "deletions", "additions" ])(data))

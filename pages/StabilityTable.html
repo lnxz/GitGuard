@@ -15,6 +15,8 @@ td, th {
 </style>
 <body>
 
+<!-- Load bootstrap stylesheet -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <!-- load the d3.js library -->
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
@@ -41,7 +43,19 @@ var data = {
 
 //git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\((.*?)\s+[\d]{4}/; print $1,"\n"' | sort -f | uniq -c | sort -n
 //Lists out all authors + number of lines of codes still persistant in latest version
-
+/*
+var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsStability";
+d3.json(url, function(response) {
+  var dataPersist = new Array(response.length).fill(0);
+  for (var i = 0; i < response.length; i++) {
+    var obj = {
+      lines: parseFloat(response[i].lines),
+      name: response[i].name
+    }
+    dataPersist.push(obj);
+  }
+  console.log(dataPersist);
+  */
 var dataPersist = {
   "members": [
     {lines:"10", name:"name1"},
@@ -53,6 +67,7 @@ var dataPersist = {
     {lines:"12", name:"name7"}
   ]
 }
+
 var linePerArr = [];
 for (var i = 0; i < data.members.length; i++) {
   for (var j = 0; j < dataPersist.members.length; j++) {
@@ -80,10 +95,10 @@ console.log(dataArr);
 // The table generation function
 function tabulate(data, columns) {
     var table = d3.select("body").append("table")
-            .attr("style", "margin-left: 400px"),
+            .attr("class", "table"),
         thead = table.append("thead"),
         tbody = table.append("tbody");
-
+        table.class = "table";
     // append the header row
     thead.append("tr")
         .selectAll("th")
@@ -91,6 +106,7 @@ function tabulate(data, columns) {
         .enter()
         .append("th")
             .text(function(column) { return column});
+            thead.style.class = "panel-heading";
 
     // create a row for each object in the data
     var rows = tbody.selectAll("tr")
@@ -114,7 +130,8 @@ function tabulate(data, columns) {
 }
 
 // render the table
- var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
 
+ var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
+//})
 </script>
 </body>
