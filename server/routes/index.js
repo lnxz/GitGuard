@@ -9,6 +9,12 @@ var nodeUrl = require('url')
 router.get('/authors', function (req, res, next) {
   let repoUrl = req.query.repo
 
+  if (repoUrl == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
   // this equality check may not be enough. not too sure if there's a need to sanitize
   if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthors(repoUrl, (error, data) => {
@@ -25,6 +31,12 @@ router.get('/authors', function (req, res, next) {
 /* GET all authors addition deletion */
 router.get('/authorsAdditionsDeletions', function (req, res, next) {
   let repoUrl = req.query.repo
+
+  if (repoUrl == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
@@ -45,6 +57,12 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
 router.get('/authorsStability', function (req, res, next) {
   let repoUrl = req.query.repo
 
+  if (repoUrl == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthorsStability(repoUrl, (error, data) => {
@@ -64,11 +82,38 @@ router.get('/commits', function (req, res, next) {
   let repoUrl = req.query.repo
   let authorName = req.query.author
 
+  if (repoUrl == null || authorName == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
   // this equality check is not safe
-  if (isValidUrl(repoUrl) && authorName != null) {
-    console.log(repoUrl)
-    console.log(authorName)
+  if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthorsCommits(repoUrl, authorName, (error, data) => {
+      res.status(200)
+        .send(data);
+    });
+  } else {
+    res.status(200)
+      .send('{}');
+  }
+
+
+});
+
+router.get('/files', function (req, res, next) {
+  let repoUrl = req.query.repo
+
+  if (repoUrl == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
+  // this equality check is not safe
+  if (isValidUrl(repoUrl)) {
+    gitfunctions.getRepoFiles(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
     });

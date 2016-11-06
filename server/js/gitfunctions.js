@@ -202,162 +202,192 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
 }
 
 exports.getAuthorsStability = (repoUrl, callback) => {
-    console.log('[getAuthorsStability]');
-    let command = ` git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\\((.*?)\\s+[\\d]{4}/; print $1,"\\n"' | sort -f | uniq -c | sort -n | awk '{ printf "\\"lines\\":\\"%s\\",\\"name\\":\\"%s\\"\\n", $1, $2}'`
+  console.log('[getAuthorsStability]');
+  let command = ` git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\\((.*?)\\s+[\\d]{4}/; print $1,"\\n"' | sort -f | uniq -c | sort -n | awk '{ printf "\\"lines\\":\\"%s\\",\\"name\\":\\"%s\\"\\n", $1, $2}'`
 
-    gitClone(repoUrl, (error, data, repoPath) => {
-        console.log('[getAuthorsStability]: [gitClone]');
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[getAuthorsStability]: [gitClone]');
 
-        if (error) {
-          console.log('[getAuthorsStability]: [gitClone] [error]');
-          if (isRepoExist(error)) {
-            console.log('[getAuthorsStability]: [gitClone] [error] [isRepoExist(error)]');
+    if (error) {
+      console.log('[getAuthorsStability]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getAuthorsStability]: [gitClone] [error] [isRepoExist(error)]');
 
-            executeCommand(command, repoPath, (error, data) => {
-              let json = stringToJsonArray(data)
-              callback(error, json);
-            })
-          } else{
-            callback(error, ''); //sends nothin
-          }
+        executeCommand(command, repoPath, (error, data) => {
+          let json = stringToJsonArray(data)
+          callback(error, json);
+        })
+      } else {
+        callback(error, ''); //sends nothin
+      }
 
-        } else {
-          executeCommand(command, repoPath, (error, data) => {
-            let json = stringToJsonArray(data)
-            callback(error, json);
-          })
-        }
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        let json = stringToJsonArray(data)
+        callback(error, json);
       })
     }
+  })
+}
 
-    exports.getAuthorsCommits = (repoUrl, authorName, callback) => {
-        console.log('[getAuthorsCommits]');
-        let command = ` git --no-pager log --author=${authorName} --date=short  --pretty=format:\'{%n  111555commit666222: 111555%H666222,%n  111555author666222: 111555%an <%ae>666222,%n  111555date666222: 111555%ad666222},\'     $@ | sed \'s\/\"\/\\\\\"\/g\' |  sed \'s\/111555\/\"\/g\' | sed \'s\/666222\/\"\/g\' | perl -pe \'BEGIN{print \"[\"}; END{print \"]\\n\"}\' | perl -pe \'s\/},]\/}]\/\'\r\n`
+exports.getAuthorsCommits = (repoUrl, authorName, callback) => {
+  console.log('[getAuthorsCommits]');
+  let command = ` git --no-pager log --author=${authorName} --date=short  --pretty=format:\'{%n  111555commit666222: 111555%H666222,%n  111555author666222: 111555%an <%ae>666222,%n  111555date666222: 111555%ad666222},\'     $@ | sed \'s\/\"\/\\\\\"\/g\' |  sed \'s\/111555\/\"\/g\' | sed \'s\/666222\/\"\/g\' | perl -pe \'BEGIN{print \"[\"}; END{print \"]\\n\"}\' | perl -pe \'s\/},]\/}]\/\'\r\n`
 
-        gitClone(repoUrl, (error, data, repoPath) => {
-            console.log('[getAuthorsCommits]: [gitClone]');
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[getAuthorsCommits]: [gitClone]');
 
-            if (error) {
-              console.log('[getAuthorsCommits]: [gitClone] [error]');
-              if (isRepoExist(error)) {
-                console.log('[getAuthorsCommits]: [gitClone] [error] [isRepoExist(error)]');
+    if (error) {
+      console.log('[getAuthorsCommits]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getAuthorsCommits]: [gitClone] [error] [isRepoExist(error)]');
 
-                executeCommand(command, repoPath, (error, json) => {
-                  // jiafeng's command already format swee swee
-                  callback(error, json);
-                })
-              } else{
-                callback(error, ''); //sends nothin
-              }
+        executeCommand(command, repoPath, (error, json) => {
+          // jiafeng's command already format swee swee
+          callback(error, json);
+        })
+      } else {
+        callback(error, ''); //sends nothin
+      }
 
-            } else {
-              executeCommand(command, repoPath, (error, json) => {
-                // jiafeng's command already format swee swee
-                callback(error, json);
-              })
-            }
-          })
-        }
+    } else {
+      executeCommand(command, repoPath, (error, json) => {
+        // jiafeng's command already format swee swee
+        callback(error, json);
+      })
+    }
+  })
+}
 
+exports.getRepoFiles = (repoUrl, callback) => {
+  console.log('[getRepoFiles]');
+  let command = `git ls-files | awk \'{ printf \"\\\"file\\\":\\\"%s\\\"\\n\", $0}\'`
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[getRepoFiles]: [gitClone]');
 
-    var executeCommand = (command, repoPath, callback) => {
-      console.log(`[executeCommand]: ${command}`)
-        executive.quiet(command, {
-            cwd: repoPath
-          }, (error, stdout, stderr) => {
-            if (error) {
-              console.log(error)
-              throw error;
-            }
-            callback(error, stdout);
-          })
-        }
+    if (error) {
+      console.log('[getRepoFiles]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getRepoFiles]: [gitClone] [error] [isRepoExist(error)]');
 
-        /*only accept \n delimited string*/
-        var stringToJsonArray = (string) => {
-          let arrayOfData = string.split('\n');
-          let json = '[';
-          json += `{${arrayOfData[0]}}`
+        executeCommand(command, repoPath, (error, data) => {
+          // jiafeng's command already format swee swee
+          let json = stringToJsonArray(data)
+          callback(error, json);
+        })
+      } else {
+        callback(error, ''); //sends nothin
+      }
 
-          for (var i = 1; i < arrayOfData.length; i++) {
-
-            //if every stdout produce a trailing empty line, then this equality check would have to stay
-            if (arrayOfData[i].length === 0) {
-              break;
-            }
-
-            json += (',');
-
-            // console.log(arrayOfData[i]);
-            json += `{${arrayOfData[i]}}`;
-          }
-          json += ']';
-          return json;
-        }
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        // jiafeng's command already format swee swee
+        let json = stringToJsonArray(data)
+        callback(error, json);
+      })
+    }
+  })
+}
 
 
+var executeCommand = (command, repoPath, callback) => {
+  console.log(`[executeCommand]: ${command}`)
+  executive.quiet(command, {
+    cwd: repoPath
+  }, (error, stdout, stderr) => {
+    if (error) {
+      console.log(error)
+      throw error;
+    }
+    callback(error, stdout);
+  })
+}
 
-        exports.gitBlame = (repoUrl, callback) => {
-          var childProcess = require('child_process'),
-            gitblame;
+/*only accept \n delimited string*/
+var stringToJsonArray = (string) => {
+  let arrayOfData = string.split('\n');
+  let json = '[';
+  json += `{${arrayOfData[0]}}`
 
-          gitblame = childProcess.exec(`cd ${REPOS_DIR+getRepoName(repoUrl)} && git blame -L:"Slot" scrapy/core/engine.py`, function (error, stdout, stderr) {
-            if (error) {
-              console.log(error.stack);
-              console.log('Error code: ' + error.code);
-              console.log('Signal received: ' + error.signal);
-            }
-            // console.log( 'Child Process STDOUT: ' + stdout );
-            //console.log( 'Child Process STDERR: ' + stderr );
-            callback(stdout);
-          });
+  for (var i = 1; i < arrayOfData.length; i++) {
 
-          gitblame.on('exit', function (code) {
-            console.log('Child process exited with exit code ' + code);
-          });
-        }
+    //if every stdout produce a trailing empty line, then this equality check would have to stay
+    if (arrayOfData[i].length === 0) {
+      break;
+    }
 
+    json += (',');
 
-
-        var showGitLog = () => {
-          exec(`cd repositories/github.com/vuejs/awesome-vue.git && git shortlog`, function (err, stdout, stderr) {
-            console.log(err);
-            console.log(stdout);
-            console.log(stderr);
-          });
-        }
-
-        var showGitBlame = () => {
+    // console.log(arrayOfData[i]);
+    json += `{${arrayOfData[i]}}`;
+  }
+  json += ']';
+  return json;
+}
 
 
-        }
 
-        var getRepoName = (repoUrl) => {
-          let repoName = repoUrl;
+exports.gitBlame = (repoUrl, callback) => {
+  var childProcess = require('child_process'),
+    gitblame;
 
-          if (repoName.startsWith(HTTPS, 0)) {
-            repoName = repoName.replace(HTTPS, '');
-          }
+  gitblame = childProcess.exec(`cd ${REPOS_DIR+getRepoName(repoUrl)} && git blame -L:"Slot" scrapy/core/engine.py`, function (error, stdout, stderr) {
+    if (error) {
+      console.log(error.stack);
+      console.log('Error code: ' + error.code);
+      console.log('Signal received: ' + error.signal);
+    }
+    // console.log( 'Child Process STDOUT: ' + stdout );
+    //console.log( 'Child Process STDERR: ' + stderr );
+    callback(stdout);
+  });
 
-          if (repoName.startsWith(HTTP, 0)) {
-            repoName = repoName.replace(HTTP, '');
-          }
+  gitblame.on('exit', function (code) {
+    console.log('Child process exited with exit code ' + code);
+  });
+}
 
-          console.log(`repoUrl: ${repoUrl}`);
-          console.log(`RepoName: ${repoName}`);
 
-          return repoName;
-        }
 
-        // TODO: create a few more helper functions to determine download failure
+var showGitLog = () => {
+  exec(`cd repositories/github.com/vuejs/awesome-vue.git && git shortlog`, function (err, stdout, stderr) {
+    console.log(err);
+    console.log(stdout);
+    console.log(stderr);
+  });
+}
 
-        /*this method is a hack. may fail if the library api changes its error message*/
-        var isRepoExist = (reasonForFailure) => {
-          let errorMessage = reasonForFailure.toString();
-          return errorMessage.includes('exists and is not an empty directory');
-        }
+var showGitBlame = () => {
 
-        // this.gitBlame( 'https://github.com/scrapy/scrapy.git' );
-        // cloneRepo('https://github.com/scrapy/scrapy.git');
-        // cloneRepo('https://github.com/vuejs/awesome-vue.git');
-        // showGitLog();
+
+}
+
+var getRepoName = (repoUrl) => {
+  let repoName = repoUrl;
+
+  if (repoName.startsWith(HTTPS, 0)) {
+    repoName = repoName.replace(HTTPS, '');
+  }
+
+  if (repoName.startsWith(HTTP, 0)) {
+    repoName = repoName.replace(HTTP, '');
+  }
+
+  console.log(`repoUrl: ${repoUrl}`);
+  console.log(`RepoName: ${repoName}`);
+
+  return repoName;
+}
+
+// TODO: create a few more helper functions to determine download failure
+
+/*this method is a hack. may fail if the library api changes its error message*/
+var isRepoExist = (reasonForFailure) => {
+  let errorMessage = reasonForFailure.toString();
+  return errorMessage.includes('exists and is not an empty directory');
+}
+
+// this.gitBlame( 'https://github.com/scrapy/scrapy.git' );
+// cloneRepo('https://github.com/scrapy/scrapy.git');
+// cloneRepo('https://github.com/vuejs/awesome-vue.git');
+// showGitLog();
