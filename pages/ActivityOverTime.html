@@ -25,19 +25,19 @@
 
 var data = {
   "members": [
-    {date: "2016-11-05"},
-    {date: "2016-11-02"},
-    {date: "2016-11-05"},
-    {date: "2016-11-06"},
-    {date: "2016-11-06"},
-    {date: "2016-11-05"},
-    {date: "2016-11-05"},
-    {date: "2016-10-05"},
-    {date: "2016-10-05"},
-    {date: "2016-10-05"},
-    {date: "2016-10-23"},
-    {date: "2016-10-23"},
-    {date: "2016-10-25"}
+    {date: "05-Nov-16"},
+    {date: "02-Nov-16"},
+    {date: "05-Nov-16"},
+    {date: "06-Nov-16"},
+    {date: "06-Nov-16"},
+    {date: "05-Nov-16"},
+    {date: "05-Nov-16"},
+    {date: "05-Oct-16"},
+    {date: "05-Oct-16"},
+    {date: "05-Oct-16"},
+    {date: "23-Oct-16"},
+    {date: "23-Oct-16"},
+    {date: "25-Oct-16"}
   ]
 };
 
@@ -58,10 +58,8 @@ for (var i = 0; i < data.members.length; i++)
     idxFound = -1;
     for (var j = 0; j < dataArr.length; j ++)
     {
-
       if (data.members[i].date == dataArr[j].date)
       {
-
         idxFound = j;
       }
     }
@@ -69,23 +67,21 @@ for (var i = 0; i < data.members.length; i++)
       dataArr[idxFound].count ++;
     }else {
         var obj = {
-          date : data.members[i].date,
-          count : 1
+          count : 1,
+          date : data.members[i].date
         }
         dataArr.push(obj);
     }
   }
-
 }
 
 dataArr.sort(function(a,b) {
   a = new Date(a.date);
     b = new Date(b.date);
-    return a>b ? -1 : a<b ? 1 : 0;
+    return b>a ? -1 : b<a ? 1 : 0;
 });
 
 console.log(dataArr);
-
 var dataString = d3.csvFormat(dataArr, ["date","count"]);
 console.log(dataString);
 
@@ -94,8 +90,7 @@ var svg = d3.select("svg"),
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    var parseTime = d3.timeParse("%y-%m-%d");
+    var parseTime = d3.timeParse("%d-%b-%y");
 
 var x = d3.scaleTime()
     .rangeRound([0, width]);
@@ -106,17 +101,23 @@ var y = d3.scaleLinear()
 var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.close); });
-
-d3.csv("https://raw.githubusercontent.com/lnxz/GitGuard/master/pages/test.tsv?token=AK64dGftmkDlB5JAakeaGH6mCygQH7hpks5YKKuJwA%3D%3D", function(d) {
+/*
+d3.csv("https://raw.githubusercontent.com/lnxz/GitGuard/master/pages/test.tsv?token=AK64dOJHdil8K1SWB7Gmc3lXVEBMsW9Jks5YKKxHwA%3D%3D", function(d) {
 console.log(d);
   d.date = parseTime(d.date);
   d.close = +d.close;
   return d;
 }, function(error, data) {
   if (error) throw error;
+  data.sort(function(a,b) {
+    a = new Date(a.date);
+      b = new Date(b.date);
+      return a>b ? -1 : a<b ? 1 : 0;
+  });
+*/
 
-  x.domain(d3.extent(data, function(d) { return d.date; }));
-  y.domain(d3.extent(data, function(d) { return d.close; }));
+  x.domain(d3.extent(dataArr, function(d) { return d.date; }));
+  y.domain(d3.extent(dataArr, function(d) { return d.close; }));
 
   g.append("g")
       .attr("class", "axis axis--x")
@@ -132,12 +133,13 @@ console.log(d);
       .attr("y", 6)
       .attr("dy", "0.71em")
       .style("text-anchor", "end")
-      .text("Price ($)");
+      .text("Activity");
 
   g.append("path")
-      .datum(data)
+      .datum(dataArr)
       .attr("class", "line")
       .attr("d", line);
-});
+
+//});
 </script>
 </body>
