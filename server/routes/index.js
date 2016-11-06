@@ -43,11 +43,13 @@ router.get('/authors', function (req, res, next) {
           console.log(myCache.keys())
           res.status(200)
             .send(data);
+            return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
         res.status(200)
           .send(data);
+          return;
       }
 
     })
@@ -92,11 +94,13 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
           console.log(myCache.keys())
           res.status(200)
             .send(data);
+            return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
         res.status(200)
           .send(data);
+          return;
       }
 
     })
@@ -120,7 +124,7 @@ router.get('/authorsStability', function (req, res, next) {
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
-  
+
     gitfunctions.isRepoLatest(repoUrl, (isLatest) => {
       if (!isLatest) {
         console.log('[isNOTLatest]')
@@ -148,6 +152,7 @@ router.get('/authorsStability', function (req, res, next) {
         console.log('[isLatest]: [cache is NOT empty]')
         res.status(200)
           .send(data);
+          return;
       }
 
     })
@@ -180,7 +185,6 @@ router.get('/commits', function (req, res, next) {
     res.status(200)
       .send('{}');
   }
-
 
 });
 
