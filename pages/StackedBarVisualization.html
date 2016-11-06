@@ -55,70 +55,45 @@
 	<script>
 
 	//Retrieve JSON data
-	var url = "https://api.github.com/repos/tungnk1993/scrapy/stats/contributors";
-	d3.json(url, function(response) {
-		var authorArray = new Array(response.length).fill(0);
-		var addArray = new Array(response.length).fill(0);
-		var delArray = new Array(response.length).fill(0);
-		var combineArray = new Array(response.length).fill(0);
+	var repoUrl = "https://github.com/tungnk1993/scrapy";
+  getData();
+	function getData()
+	{
+	  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsAdditionsDeletions?repo=" + repoUrl;
+	  return d3.json(url, function(response) {
 
-		// Placeholder for user array
-		var usersArray = new Array(response.length).fill(0);
+			var top = 10; // Edit this value to show more contributors
+	    var data = new Array();
+	    for (var i = 0; i < response.length; i++) {
+	      var obj = {
+	        name: response[i].name,
+	        additions: parseFloat(response[i].additions),
+	        deletions: parseFloat(response[i].deletions),
+					total: parseFloat(response[i].additions) + parseFloat(response[i].deletions)
+	      }
+	      data.push(obj);
+	    }
+			data.sort(function(a, b) {
+				return b.total - a.total;
+			});
+			console.log(data);
 
-		for (var i = 0; i < response.length; i++) {
-			var item = response[i];
-
-			authorArray[i] = item.author.login;
-
-			// Placeholder for selecting users
-			if(i < 20){
-				usersArray[i] =item.author.login;
-			}
-
-			var weeks = item.weeks.length;
-			var adds = 0;
-			var dels = 0;
-
-			var weeksData = new Array(weeks).fill(0);
-			weeksData = item.weeks;
-
-			for (var x = 0; x <= weeks - 1; x++) {
-				var weekItem = weeksData[x];
-				addArray[i] += weekItem.a;
-				delArray[i] += weekItem.d;
-			};
-		};
-
-		for (var y = 0; y <= response.length; y++) {
-			combineArray[y] = addArray[y] + delArray[y]
-		};
-
-		var dataArr = [];
-		for (var i = 0; i < response.length; i++) {
-			var obj = {
-				name: authorArray[i],
-				additions: addArray[i],
-				deletions: delArray[i],
-				total: combineArray[i]
-			};
-			dataArr.push(obj);
-		}
-
-		dataArr.sort(function(a, b) {
-			return b.total - a.total;
-		});
-
-		var data = [];
-		for (var i =0; i < response.length; i ++)
-		{
-			for (var j = 0; j < usersArray.length; j ++ )
+			var dataTop = [];
+			if(response.length < 10)
 			{
-				if(authorArray[i] == usersArray[j])
-				{
-					data.push(dataArr[i]);
-				}
+				top = response.length;
 			}
-		}
+			for(var i = 0; i < top ; i ++)
+			{
+				dataTop.push(data[i]);
+			}
+			console.log(dataTop);
+			addGraph(dataTop);
+
+	  })
+	}
+
+	function addGraph(data){
 
 		var svg = d3.select("svg"),
 		margin = {top: 20, right: 20, bottom: 100, left: 40},
@@ -135,7 +110,7 @@
 		.rangeRound([height, 0]);
 
 		var z = d3.scaleOrdinal()
-		.range(["#f64e4e", "#a8d6aa"]);
+		.range([ "#a8d6aa","#f64e4e"]);
 
 		var stack = d3.stack();
 		var tip = d3.tip()
@@ -207,7 +182,7 @@
 			.attr("text-anchor", "end")
 			.text(function(d) { return d; });
 		}
-	});
+	}
 	</script>
 </body>
 </html>
