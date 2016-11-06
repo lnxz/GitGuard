@@ -3,6 +3,7 @@ var gitfunctions = require('../js/gitfunctions');
 var router = express.Router();
 
 var validUrl = require('valid-url');
+var nodeUrl = require('url')
 
 /* GET all authors */
 router.get('/authors', function (req, res, next) {
@@ -80,7 +81,12 @@ router.get('/commits', function (req, res, next) {
 });
 
 var isValidUrl = (url) => {
-  return validUrl.isUri(url)
+  let urlObject = nodeUrl.parse(url)
+  let hostname = urlObject.host
+  let pathname = urlObject.pathname
+  console.log(`[Checking repo URL]: ${hostname} ${pathname}`)
+
+  return validUrl.isUri(url) && hostname != null && pathname != null
 }
 
 module.exports = router;
