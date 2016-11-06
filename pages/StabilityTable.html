@@ -9,86 +9,48 @@
 }
 
 td, th {
-    padding: 1px 4px;
+  padding: 1px 4px;
 }
 
 </style>
 <body>
 
-<!-- Load bootstrap stylesheet -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-<!-- load the d3.js library -->
-<script src="https://d3js.org/d3.v4.min.js"></script>
+  <!-- Load bootstrap stylesheet -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <!-- load the d3.js library -->
+  <script src="https://d3js.org/d3.v4.min.js"></script>
 
-<script>
-
-//git log --format='%aN' | sort -u
-//get all authors
-//for each author, do the next command to get json obj
-
-//git log --shortstat --author="Bevin" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'
-//With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
-//insert into data.members array
-var data = getData();
-/*
-console.log(data.size);
-while (data.length == undefined)
-{
-  console.log(data.size);
-}
-*/
-
+  <script>
+  var repoUrl = "https://github.com/lnxz/GitGuard";
+  getData();
 
 function getData()
 {
-  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsAdditionsDeletions?repo=https://github.com/lnxz/GitGuard";
+  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsAdditionsDeletions?repo=" + repoUrl;
   return d3.json(url, function(response) {
-    console.log(response);
-    var data = new Array(response.length).fill(0);
+
+    var data = new Array();
     for (var i = 0; i < response.length; i++) {
       var obj = {
-        console.log(response.name);
-        name: response.name,
-        additions: parseFloat(response.additions),
-        deletions: parseFloat(response.deletions)
+        name: response[i].name,
+        additions: parseFloat(response[i].additions),
+        deletions: parseFloat(response[i].deletions)
       }
       data.push(obj);
     }
-    console.log("Data Arr", data);
-      console.log("getting data persist");
-      var dataPersist = getDataPersist();
-        console.log("getting data Arr");
-      var dataArr = processData(data,dataPersist);
-      console.log("DataARR", dataArr);
-      var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
-        return data;
 
-
+    var dataPersist = getDataPersist(data);
   })
 }
 
-function getDataPersist()
+function getDataPersist(data)
 {
-
-  /*
-  var data = {
-    "members": [
-      {name: "name1", additions:"40", deletions:"30"},
-      {name: "name2", additions:"30", deletions:"20"},
-      {name: "name3", additions:"20", deletions:"30"},
-      {name: "name4", additions:"30", deletions:"60"},
-      {name: "name5", additions:"40", deletions:"40"},
-      {name: "name6", additions:"10", deletions:"20"},
-      {name: "name7", additions:"30", deletions:"40"}
-    ]
-  };
-  */
-  //git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\((.*?)\s+[\d]{4}/; print $1,"\n"' | sort -f | uniq -c | sort -n
-  //Lists out all authors + number of lines of codes still persistant in latest version
-  /*
-  var url = "http://http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsStability?repo=https://github.com/scrapy/scrapy";
+  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsStability?repo=" + repoUrl;
   d3.json(url, function(response) {
-    var dataPersist = new Array(response.length).fill(0);
+
+    console.log(response);
+
+    var dataPersist = new Array();
     for (var i = 0; i < response.length; i++) {
       var obj = {
         lines: parseFloat(response[i].lines),
@@ -96,95 +58,75 @@ function getDataPersist()
       }
       dataPersist.push(obj);
     }
-    console.log(dataPersist);
-    */
-  var dataPersist = {
-    "members": [
-      {lines:"10", name:"name1"},
-      {lines:"11", name:"name2"},
-      {lines:"12", name:"name3"},
-      {lines:"15", name:"name6"},
-      {lines:"13", name:"name4"},
-      {lines:"14", name:"name5"},
-      {lines:"12", name:"name7"}
-    ]
-  }
-  return dataPersist
-}
+    console.log("dataPersist", dataPersist);
 
-function sleep (time) {
-  return new Promise((resolve) => setTimeout(resolve, time));
+    var dataArr = processData(data,dataPersist);
+    var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
+    return data;
+
+  })
 }
 
 function processData(data, dataPersist){
 
-var linePerArr = [];
-for (var i = 0; i < data.length; i++) {
-  for (var j = 0; j < dataPersist.members.length; j++) {
-    if(dataPersist.members[j].name == data[i].name)
-    {
-      linePerArr[i] =  parseFloat(dataPersist.members[j].lines);
+  var dataArr = [];
+  for (var i = 0; i < data.length; i++) {
+    var lines = 0;
+    for (var j = 0; j < dataPersist.length; j++) {
+      if(dataPersist[j].name.valueOf() == data[i].name.valueOf())
+      {
+        lines = dataPersist[j].lines;
+      }
     }
+    var obj = {
+      Name: data[i].name,
+      additions: parseFloat(data[i].additions),
+      deletions: parseFloat(data[i].deletions),
+      LinesPersist: lines,
+      Stability: lines*100/(parseFloat(data[i].additions)+parseFloat(data[i].deletions))
+    };
+    dataArr.push(obj);
   }
+  console.log(dataArr);
+  return dataArr;
 }
-var dataArr = [];
-for (var i = 0; i < data.length; i++) {
-  var obj = {
-    Name: data[i].name,
-    additions: parseFloat(data[i].additions),
-    deletions: parseFloat(data[i].deletions),
-    LinesPersist: linePerArr[i],
-    Stability: linePerArr[i]*100/(parseFloat(data[i].additions)+parseFloat(data[i].deletions))
-  };
-  dataArr.push(obj);
-}
-console.log(dataArr);
-return dataArr;
-}
-
-
-
 
 // The table generation function
 function tabulate(data, columns) {
-    var table = d3.select("body").append("table")
-            .attr("class", "table"),
-        thead = table.append("thead"),
-        tbody = table.append("tbody");
-        table.class = "table";
-    // append the header row
-    thead.append("tr")
-        .selectAll("th")
-        .data(columns)
-        .enter()
-        .append("th")
-            .text(function(column) { return column});
-            thead.style.class = "panel-heading";
+  var table = d3.select("body").append("table")
+  .attr("class", "table"),
+  thead = table.append("thead"),
+  tbody = table.append("tbody");
+  table.class = "table";
+  // append the header row
+  thead.append("tr")
+  .selectAll("th")
+  .data(columns)
+  .enter()
+  .append("th")
+  .text(function(column) { return column});
+  thead.style.class = "panel-heading";
 
-    // create a row for each object in the data
-    var rows = tbody.selectAll("tr")
-        .data(data)
-        .enter()
-        .append("tr");
+  // create a row for each object in the data
+  var rows = tbody.selectAll("tr")
+  .data(data)
+  .enter()
+  .append("tr");
 
-    // create a cell in each row for each column
-    var cells = rows.selectAll("td")
-        .data(function(row) {
-            return columns.map(function(column) {
-                return {column: column, value: row[column]};
-            });
-        })
-        .enter()
-        .append("td")
-        .attr("style", "font-family: Courier") // sets the font style
-            .html(function(d) { return d.value; });
+  // create a cell in each row for each column
+  var cells = rows.selectAll("td")
+  .data(function(row) {
+    return columns.map(function(column) {
+      return {column: column, value: row[column]};
+    });
+  })
+  .enter()
+  .append("td")
+  .attr("style", "font-family: Courier") // sets the font style
+  .html(function(d) { return d.value; });
 
-    return table;
+  return table;
 }
 
-// render the table
-
-
-//})
 </script>
 </body>
