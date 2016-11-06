@@ -2,16 +2,15 @@
 <meta charset="utf-8">
 <style> /* set the CSS */
 
+.axis--x path {
+  display: none;
+}
+
 .line {
   fill: none;
   stroke: steelblue;
-  stroke-width: 2px;
+  stroke-width: 1.5px;
 }
-
-td, th {
-    padding: 1px 4px;
-}
-
 </style>
 <body>
 
@@ -96,7 +95,7 @@ var svg = d3.select("svg"),
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var parseTime = d3.timeParse("%y-%m-%d");
+    var parseTime = d3.timeParse("%d-%b-%y");
 
 var x = d3.scaleTime()
     .rangeRound([0, width]);
@@ -108,7 +107,8 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.close); });
 
-d3.tsv("https://raw.githubusercontent.com/lnxz/GitGuard/master/pages/test.tsv?token=AK64dHWG3XoBm3qazh2I6fwpmr0J5zcWks5YKKhgwA%3D%3D", function(d) {
+d3.tsv("https://raw.githubusercontent.com/lnxz/GitGuard/master/pages/test.tsv?token=AK64dDXPgYKCKsh8U-kC1r8_lIgT7TaMks5YKKlKwA%3D%3D", function(d) {
+console.log(d);
   d.date = parseTime(d.date);
   d.close = +d.close;
   return d;
