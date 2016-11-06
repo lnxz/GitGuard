@@ -14879,16 +14879,22 @@ var varPablohoffmanJSON = [{
 		"author": "Daniel Grana <dangra@gmail.com>",
 		"date": "2009-05-04"
 	}]
+	 var twoPersonData = [
+    { "email": "dangra@gmail.com" },
+    { "email": "pablo@pablohoffman.com" }
+  ]
 $(document).ready(function() {
 	$('ul.sidebar-nav li').click(function(e) {
 		loadRepo($(this).find("a").text());
 	});
 	
-	//Load repo members, add to names array
-	var names = new Array();
-	for (var i = 0; i < 10; i++) {
-		names[i] = "name " + (i + 1);
-	}
+	  //Load repo members, add to names array
+  var names = new Array();
+
+  for (var i = 0; i < twoPersonData.length; i++) {
+    names[i] = twoPersonData[i].email;
+  }
+
 	
 	names.forEach(function(item) {
 		var val = item.replace(/\s/g,"_");
