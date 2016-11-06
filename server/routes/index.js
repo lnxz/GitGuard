@@ -2,12 +2,14 @@ var express = require('express');
 var gitfunctions = require('../js/gitfunctions');
 var router = express.Router();
 
+var validUrl = require('valid-url');
+
 /* GET all authors */
 router.get('/authors', function (req, res, next) {
   let repoUrl = req.query.repo
 
-  // this equality check is not safe
-  if (repoUrl != null) {
+  // this equality check may not be enough. not too sure if there's a need to sanitize
+  if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthors(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
@@ -24,7 +26,7 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
   let repoUrl = req.query.repo
 
   // this equality check is not safe
-  if (repoUrl != null) {
+  if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthorsAdditionsDeletions(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
@@ -43,7 +45,7 @@ router.get('/authorsStability', function (req, res, next) {
   let repoUrl = req.query.repo
 
   // this equality check is not safe
-  if (repoUrl != null) {
+  if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthorsStability(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
@@ -62,7 +64,7 @@ router.get('/commits', function (req, res, next) {
   let authorName = req.query.author
 
   // this equality check is not safe
-  if (repoUrl != null && authorName != null) {
+  if (isValidUrl(repoUrl) && authorName != null) {
     console.log(repoUrl)
     console.log(authorName)
     gitfunctions.getAuthorsCommits(repoUrl, authorName, (error, data) => {
@@ -76,5 +78,9 @@ router.get('/commits', function (req, res, next) {
 
 
 });
+
+var isValidUrl = (url) => {
+  return validUrl.isUri(url)
+}
 
 module.exports = router;
