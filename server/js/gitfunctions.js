@@ -1,3 +1,4 @@
+require('events').EventEmitter.defaultMaxListeners = Infinity;
 const HTTP = 'http://';
 const HTTPS = 'https://';
 const REPOS_DIR = 'repositories/';
