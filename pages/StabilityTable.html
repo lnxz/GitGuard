@@ -30,33 +30,40 @@ td, th {
 //With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
 //insert into data.members array
 var data = getData();
+/*
 console.log(data.size);
-if (data.length == undefined)
+while (data.length == undefined)
 {
-  console.log(data);
-  data = getData();
+  console.log(data.size);
 }
-var dataPersist = getDataPersist();
-var dataArr = processData(data,dataPersist);
-var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
+*/
+
 
 function getData()
 {
-  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsAdditionsDeletions?repo=https://github.com/scrapy/scrapy";
+  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsAdditionsDeletions?repo=https://github.com/lnxz/GitGuard";
   return d3.json(url, function(response) {
-    console.log("Test");
     console.log(response);
     var data = new Array(response.length).fill(0);
     for (var i = 0; i < response.length; i++) {
       var obj = {
-        name: response[i].name,
-        additions: parseFloat(response[i].additions),
-        deletions: parseFloat(response[i].deletions)
+        console.log(response.name);
+        name: response.name,
+        additions: parseFloat(response.additions),
+        deletions: parseFloat(response.deletions)
       }
       data.push(obj);
-        console.log(data);
-        return data;
     }
+    console.log("Data Arr", data);
+      console.log("getting data persist");
+      var dataPersist = getDataPersist();
+        console.log("getting data Arr");
+      var dataArr = processData(data,dataPersist);
+      console.log("DataARR", dataArr);
+      var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
+        return data;
+
+
   })
 }
 
@@ -105,25 +112,29 @@ function getDataPersist()
   return dataPersist
 }
 
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 function processData(data, dataPersist){
 
 var linePerArr = [];
-for (var i = 0; i < data.members.length; i++) {
+for (var i = 0; i < data.length; i++) {
   for (var j = 0; j < dataPersist.members.length; j++) {
-    if(dataPersist.members[j].name == data.members[i].name)
+    if(dataPersist.members[j].name == data[i].name)
     {
       linePerArr[i] =  parseFloat(dataPersist.members[j].lines);
     }
   }
 }
 var dataArr = [];
-for (var i = 0; i < data.members.length; i++) {
+for (var i = 0; i < data.length; i++) {
   var obj = {
-    Name: data.members[i].name,
-    additions: parseFloat(data.members[i].additions),
-    deletions: parseFloat(data.members[i].deletions),
+    Name: data[i].name,
+    additions: parseFloat(data[i].additions),
+    deletions: parseFloat(data[i].deletions),
     LinesPersist: linePerArr[i],
-    Stability: linePerArr[i]*100/(parseFloat(data.members[i].additions)+parseFloat(data.members[i].deletions))
+    Stability: linePerArr[i]*100/(parseFloat(data[i].additions)+parseFloat(data[i].deletions))
   };
   dataArr.push(obj);
 }
