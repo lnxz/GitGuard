@@ -56,6 +56,7 @@ router.get('/authors', function (req, res, next) {
   } else {
     res.status(200)
       .send('{}');
+      return;
   }
 
 });
@@ -107,6 +108,7 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
   } else {
     res.status(200)
       .send('{}');
+      return;
   }
 
 
@@ -147,6 +149,7 @@ router.get('/authorsStability', function (req, res, next) {
           console.log(myCache.keys())
           res.status(200)
             .send(data);
+            return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
@@ -160,6 +163,7 @@ router.get('/authorsStability', function (req, res, next) {
   } else {
     res.status(200)
       .send('{}');
+      return;
   }
 
 });
@@ -180,10 +184,12 @@ router.get('/commits', function (req, res, next) {
     gitfunctions.getAuthorsCommits(repoUrl, authorName, (error, data) => {
       res.status(200)
         .send(data);
+        return;
     });
   } else {
     res.status(200)
       .send('{}');
+      return;
   }
 
 });
@@ -202,10 +208,12 @@ router.get('/files', function (req, res, next) {
     gitfunctions.getRepoFiles(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
+        return;
     });
   } else {
     res.status(200)
       .send('{}');
+      return;
   }
 });
 
@@ -225,10 +233,12 @@ router.get('/codes', function (req, res, next) {
     gitfunctions.getCodes(repoUrl, repoBranch, repoFile, (error, data) => {
       res.status(200)
         .send(data);
+        return;
     });
   } else {
     res.status(200)
       .send('{}');
+      return;
   }
 });
 
