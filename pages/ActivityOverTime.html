@@ -95,7 +95,7 @@ var svg = d3.select("svg"),
     height = +svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var parseTime = d3.timeParse("%d-%b-%y");
+    var parseTime = d3.timeParse("%y-%m-%d");
 
 var x = d3.scaleTime()
     .rangeRound([0, width]);
@@ -107,7 +107,7 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.close); });
 
-d3.csv("https://raw.githubusercontent.com/lnxz/GitGuard/master/pages/test.tsv?token=AK64dL24f3_sQagq7KtIMBukfH0Yd2Pyks5YKKrywA%3D%3D", function(d) {
+d3.csv("https://raw.githubusercontent.com/lnxz/GitGuard/master/pages/test.tsv?token=AK64dGftmkDlB5JAakeaGH6mCygQH7hpks5YKKuJwA%3D%3D", function(d) {
 console.log(d);
   d.date = parseTime(d.date);
   d.close = +d.close;
