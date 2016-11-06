@@ -1,0 +1,24 @@
+APIs
+----
+
+API = http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com
+repoURL = https://github.com/lnxz/GitGuard
+
+/authors repo
+e.g. API/authors?repo=repoURL
+
+/authorsAdditionsDeletions repo
+e.g. API/authorsAdditionsDeletions?repo=repoURL
+
+/commits repo author
+e.g. API/commits?repo=repoURL&author=Siro
+
+/files repo
+e.g. API/files?repo=repoURL
+
+/codes repo branch
+e.g. API/commits?repo=repoURL&branch=master&file=pages/compare.html
+
+
+
+

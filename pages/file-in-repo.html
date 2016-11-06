@@ -4,22 +4,63 @@
   <meta charset="utf-8">
   <!-- Required Stylesheets -->
   <link rel="stylesheet" href="../css/jstree.min.css"/>
-  
+  <link rel="stylesheet" href="../css/highlight-default.css"/>
+
   <!-- Required Javascript -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="../js/jstree.min.js"></script>
+  <script src="../js/highlight.pack.js"></script>
+  
+  <style>
+    #file-contents {
+      border: 1px solid #d8d8d8;
+      border-collapse: collapse;
+      border-spacing: 0px;
+    }
+    
+    #file-contents th {
+      border: 1px solid #d8d8d8;
+      padding: 10px 10px 10px 10px;
+      border-collapse: collapse;
+      text-align: left;
+      display: none;
+      color: dimgrey;
+      background-color: aliceblue;
+    }
+    
+    #file-contents tr:hover {
+      background-color: aliceblue;
+    }
+    
+    #file-contents td:first-child {
+      border: 1px solid #d8d8d8;
+      text-align: right;
+      -webkit-user-select: none;  
+      -moz-user-select: none;    
+      -ms-user-select: none;      
+      user-select: none; 
+    }
+    
+    .selected {
+      background: aliceblue;
+    }
+  </style>
 </head>
 <body>
 
-<div id="jstree" style="float: left; margin-right: 10px;"></div>
-<div style="margin: 10px;">
-  <table id="file-contents"></table>
+  
+  
+<div id="jstree" style="float: left; margin-top: 20px; margin-right: 10px;"></div>
+<div style="margin-top: 20px; margin-bottom: 100px; float:left;">
+  <table id="file-contents">
+  <tr><th colspan="2" id="file-header"></th></tr>
+  </table>
 </div>
   
 <script>
   var repoURL = "https://github.com/C-YanHua/CS3201-T04";
-  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/files?repo=";
-  var url = api + repoURL;
+  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
+  var url = api + "/files?repo=" + repoURL;
   
   $.getJSON(url, function(response) {
     response.sort(function(a,b) {
@@ -33,6 +74,7 @@
     
     var data = new Array();
     
+    //Format json into tree structure
     for (var i = 0; i < response.length; i++) {
       var path = response[i].file;
       var folders = path.split('/');
@@ -67,31 +109,123 @@
       }
     } 
     
-    $('#jstree').jstree( { 'core' : { 'data' : data } } );
-    
+    drawDirTree(data);
+  });
+  
+  function drawDirTree(tree) {
+    $('#jstree').jstree( { 'core' : { 'data' : tree } } );
+
     $('#jstree').on("changed.jstree", function (e, data) {
       if (data.node.id.split('/').length == 1) {
-        console.log(data.node.text);
-        //git --no-pager show master:{file}
-        var temp = "";
-        for (var i = 0; i < 100; i++) {
-          if (i%10 == 0) temp += "\n";
-          temp += data.node.text;
+        var filePath = data.node.parent + "/" + data.node.text;
+        if (filePath.split("/")[0] == "#") {
+          filePath = data.node.text;
         }
-        $('#file-contents').find("tr").remove();
-        $('#file-contents').append("<tr><td>" + temp + "</td></tr>");
+        
+        var getFileApi = api + "/codes?repo=" + repoURL + "&branch=master&file=" + filePath;
+        
+        $.ajax({
+          url : getFileApi,
+          success : function(result){
+            showFileContents(result);
+          }
+        });
       }
     });
+  }
+  
+  //Load file contents table
+  function showFileContents(encodedString) {
+    $('#file-contents').find("tr:gt(0)").remove();
+    var fileContents = atob(encodedString);
     
-    function containsObject(list, obj) {
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].id == obj.id && list[i].parent == obj.parent && list[i].text == obj.text) {
-          return true;
-        }
+    var numOfEquals = 0;
+    for (var i = encodedString.length - 1; i > 0; i--) {
+      if (encodedString[i] == '=') {
+        numOfEquals++;
       }
-      return false;
     }
-  });
+    
+    var fileSize = formatSizeUnits((encodedString.length / 4 * 3) - numOfEquals);
+    var lineCount = 0;
+    var line = fileContents.split("\n");
+    
+    for (var i = 0; i < line.length; i++) {
+      if (line[i].replace(/\t/g, '').replace(/\s/g, '') != "") {
+        lineCount++;
+      }
+      
+      var rowIndex = i + 1;
+      var row = "<tr><td>" + rowIndex + "</td><td><pre><code>" + line[i] + "</code></pre></td></tr>";
+      $('#file-contents').append(row);
+    }
+    $('#file-header').text(line.length + " (" + lineCount + " sloc)  |  " + fileSize);
+    $('#file-header').show();
+    
+    $('pre code').each(function(i, block) {
+      hljs.highlightBlock(block);
+      $(this).parent().css('margin', '0px');
+    });
+    
+    $('#file-contents tr:gt(0)').click(function() {
+      rowClick(this,false);
+    });
+  }
+  
+  var lastSelectedRow;
+  
+  function rowClick(currenttr, lock) {
+    if (window.event.button === 0) {
+      if (window.event.shiftKey) {
+        clearAll();
+        selectRowsBetweenIndexes([lastSelectedRow.rowIndex, currenttr.rowIndex])
+      } else {
+        clearAll();
+        toggleRow(currenttr);
+      }
+    }
+    
+  }
+  
+  function toggleRow(row) {
+    row.className = row.className == 'selected' ? '' : 'selected';
+    lastSelectedRow = row;
+  }
+  
+  function selectRowsBetweenIndexes(indexes) {
+    indexes.sort(function(a, b) {
+      return a - b;
+    });
+
+    for (var i = indexes[0]; i <= indexes[1]; i++) {
+      $('#file-contents tr:gt(0)').eq(i-1).addClass('selected');
+    }
+  }
+
+  function clearAll() {
+    for (var i = 0; i < $('#file-contents tr').length - 1; i++) {
+      $('#file-contents tr:gt(0)').eq(i).removeClass('selected');
+    }
+  }
+  
+  function containsObject(list, obj) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id == obj.id && list[i].parent == obj.parent && list[i].text == obj.text) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  function formatSizeUnits(bytes){
+    if      (bytes>=1000000000) {bytes=(bytes/1000000000).toFixed(2)+' GB';}
+    else if (bytes>=1000000)    {bytes=(bytes/1000000).toFixed(2)+' MB';}
+    else if (bytes>=1000)       {bytes=(bytes/1000).toFixed(2)+' KB';}
+    else if (bytes>1)           {bytes=bytes+' bytes';}
+    else if (bytes==1)          {bytes=bytes+' byte';}
+    else                        {bytes='0 byte';}
+    return bytes;
+  }
 </script>
 </body>
 </html>
