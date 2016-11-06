@@ -335,6 +335,40 @@ exports.getCodes = (repoUrl, branch, file, callback) => {
   })
 }
 
+
+exports.whosYourDaddy = (repoUrl, lineStart, lineEnd, file, callback) => {
+  console.log('[whosYourDaddy]');
+  let command = `git --no-pager log -L ${lineStart},${lineEnd}:${file} --date=short --pretty=format:\"\\\"commit\\\":\\\"%H\\\",\\\"author\\\":\\\"%aN\\\",\\\"date\\\":\\\"%ad\\\"\" | grep \\\"commit\\\":\\\".*`
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[whosYourDaddy]: [gitClone]');
+
+    if (error) {
+      console.log('[whosYourDaddy]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[whosYourDaddy]: [gitClone] [error] [isRepoExist(error)]');
+
+        executeCommand(command, repoPath, (error, data) => {
+          if (error) {
+            callback(error, '{}')
+            return;
+          }
+          let json = stringToJsonArray(data)
+          callback(error, json);
+          return;
+        })
+      } else {
+        callback(error, '{}'); //sends nothin
+      }
+
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        let json = stringToJsonArray(data)
+        callback(error, json);
+      })
+    }
+  })
+}
+
 var executeCommand = (command, repoPath, callback) => {
   console.log(`[executeCommand]: ${command}`)
   executive.quiet(command, {

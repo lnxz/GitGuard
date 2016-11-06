@@ -35,7 +35,7 @@ router.get('/authors', function (req, res, next) {
       console.log('[isLatest]')
       let data = myCache.get(req.url)
 
-      if (data == null){
+      if (data == null) {
         console.log('[isLatest]: [cache is empty]')
         gitfunctions.getAuthors(repoUrl, (error, data) => {
           myCache.set(req.url, data)
@@ -43,20 +43,20 @@ router.get('/authors', function (req, res, next) {
           console.log(myCache.keys())
           res.status(200)
             .send(data);
-            return;
+          return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
         res.status(200)
           .send(data);
-          return;
+        return;
       }
 
     })
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
 
 });
@@ -87,7 +87,7 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
       console.log('[isLatest]')
       let data = myCache.get(req.url)
 
-      if (data == null){
+      if (data == null) {
         console.log('[isLatest]: [cache is empty]')
         gitfunctions.getAuthorsAdditionsDeletions(repoUrl, (error, data) => {
           myCache.set(req.url, data)
@@ -95,20 +95,20 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
           console.log(myCache.keys())
           res.status(200)
             .send(data);
-            return;
+          return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
         res.status(200)
           .send(data);
-          return;
+        return;
       }
 
     })
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
 
 
@@ -141,7 +141,7 @@ router.get('/authorsStability', function (req, res, next) {
       console.log('[isLatest]')
       let data = myCache.get(req.url)
 
-      if (data == null){
+      if (data == null) {
         console.log('[isLatest]: [cache is empty]')
         gitfunctions.getAuthorsStability(repoUrl, (error, data) => {
           myCache.set(req.url, data)
@@ -149,13 +149,13 @@ router.get('/authorsStability', function (req, res, next) {
           console.log(myCache.keys())
           res.status(200)
             .send(data);
-            return;
+          return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
         res.status(200)
           .send(data);
-          return;
+        return;
       }
 
     })
@@ -163,7 +163,7 @@ router.get('/authorsStability', function (req, res, next) {
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
 
 });
@@ -184,12 +184,12 @@ router.get('/commits', function (req, res, next) {
     gitfunctions.getAuthorsCommits(repoUrl, authorName, (error, data) => {
       res.status(200)
         .send(data);
-        return;
+      return;
     });
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
 
 });
@@ -209,12 +209,12 @@ router.get('/commitCount', function (req, res, next) {
     gitfunctions.getCommitCount(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
-        return;
+      return;
     });
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
 
 });
@@ -233,12 +233,12 @@ router.get('/files', function (req, res, next) {
     gitfunctions.getRepoFiles(repoUrl, (error, data) => {
       res.status(200)
         .send(data);
-        return;
+      return;
     });
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
 });
 
@@ -258,13 +258,42 @@ router.get('/codes', function (req, res, next) {
     gitfunctions.getCodes(repoUrl, repoBranch, repoFile, (error, data) => {
       res.status(200)
         .send(data);
-        return;
+      return;
     });
   } else {
     res.status(200)
       .send('{}');
-      return;
+    return;
   }
+});
+
+/* GET all  */
+router.get('/whosYourDaddy', function (req, res, next) {
+  console.log('hi')
+  let repoUrl = req.query.repo
+  let lineStart = req.query.lineStart
+  let lineEnd = req.query.lineEnd
+  let file = req.query.file
+
+  if (repoUrl == null || lineStart == null || lineEnd == null || file == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
+  // this equality check is not safe
+  if (isValidUrl(repoUrl)) {
+    gitfunctions.whosYourDaddy(repoUrl, lineStart, lineEnd, file, (error, data) => {
+      res.status(200)
+        .send(data);
+      return;
+    });
+  } else {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
 });
 
 var isValidUrl = (url) => {
