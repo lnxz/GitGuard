@@ -20,5 +20,11 @@ e.g. API/files?repo=repoURL
 e.g. API/commits?repo=repoURL&branch=master&file=pages/compare.html
 
 
+given start,end and filepath, return an array of commits
+git log -L {start},{end}:{file} | grep commit
+
+given a commit, return author and date
+git log -p {commit hash} -1 | grep -e Author -e Date
+
 
 
