@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- Required Stylesheets -->
+  <link rel="stylesheet" href="../css/jstree.min.css"/>
+  
+  <!-- Required Javascript -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="../js/jstree.min.js"></script>
+</head>
+<body>
+
+<div id="jstree" style="float: left; margin-right: 10px;"></div>
+<div style="margin: 10px;">
+  <table id="file-contents"></table>
+</div>
+  
+<script>
+  var repoURL = "https://github.com/C-YanHua/CS3201-T04";
+  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/files?repo=";
+  var url = api + repoURL;
+  
+  $.getJSON(url, function(response) {
+    response.sort(function(a,b) {
+      var diff = b.file.split('/').length - a.file.split('/').length;
+      if (diff == 0) {
+        return a.file == b.file ? 0 : a.file < b.file ? -1 : 1;
+      } else {
+        return diff;
+      }
+    });
+    
+    var data = new Array();
+    
+    for (var i = 0; i < response.length; i++) {
+      var path = response[i].file;
+      var folders = path.split('/');
+      
+      if (folders.length > 1) {
+        var currPath = "";
+        
+        for (var j = 0; j < folders.length; j++) {
+          if (j == 0) {
+            var obj = { "id" : folders[j], "parent" : "#", "text" : folders[j] };
+            if (!containsObject(data, obj)) {
+              data.push(obj);
+            }
+            currPath += folders[j];
+          } 
+          else if (j > 0 && j < folders.length - 1) {
+            var obj = { "id" : (currPath + "/" + folders[j]), "parent" : currPath, "text" : folders[j] };
+            if (!containsObject(data, obj)) {
+              data.push(obj);
+            }
+            currPath += "/" + folders[j];
+          } else {
+            var obj = { "id" : folders[j], "parent" : currPath, "text" : folders[j], "icon" : "../img/txt.png" };
+            if (!containsObject(data, obj)) {
+              data.push(obj);
+            }
+          }
+        }
+      } else {
+        var obj = { "id" : path, "parent" : "#", "text" : path, "icon" : "../img/txt.png" };
+        data.push(obj);
+      }
+    } 
+    
+    $('#jstree').jstree( { 'core' : { 'data' : data } } );
+    
+    $('#jstree').on("changed.jstree", function (e, data) {
+      if (data.node.id.split('/').length == 1) {
+        console.log(data.node.text);
+        //git --no-pager show master:{file}
+        var temp = "";
+        for (var i = 0; i < 100; i++) {
+          if (i%10 == 0) temp += "\n";
+          temp += data.node.text;
+        }
+        $('#file-contents').find("tr").remove();
+        $('#file-contents').append("<tr><td>" + temp + "</td></tr>");
+      }
+    });
+    
+    function containsObject(list, obj) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id == obj.id && list[i].parent == obj.parent && list[i].text == obj.text) {
+          return true;
+        }
+      }
+      return false;
+    }
+  });
+</script>
+</body>
+</html>
