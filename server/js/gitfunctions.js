@@ -43,6 +43,33 @@ var gitLog = (repoPath, arguments, callback) => {
 
 }
 
+exports.isRepoLatest = (repoUrl, callback) => {
+  let command = `git pull origin master`
+
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[isRepoLatest]: [gitClone]');
+
+    if (error) {
+      console.log('[isRepoLatest]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[isRepoLatest]: [gitClone] [error] [isRepoExist(error)]');
+
+        executeCommand(command, repoPath, (error, data) => {
+          let isLatest = data.includes('Already up-to-date.')
+          callback(isLatest);
+        })
+      } else {
+        callback(error, ''); //sends nothin
+      }
+
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        let isLatest = data.includes('Already up-to-date.')
+        callback(isLatest);
+      })
+    }
+  })
+}
 
 exports.getAuthors = (repoUrl, callback) => {
   console.log('[getAuthors]');
@@ -355,20 +382,6 @@ exports.gitBlame = (repoUrl, callback) => {
   });
 }
 
-
-
-var showGitLog = () => {
-  exec(`cd repositories/github.com/vuejs/awesome-vue.git && git shortlog`, function (err, stdout, stderr) {
-    console.log(err);
-    console.log(stdout);
-    console.log(stderr);
-  });
-}
-
-var showGitBlame = () => {
-
-
-}
 
 var getRepoName = (repoUrl) => {
   let repoName = repoUrl;

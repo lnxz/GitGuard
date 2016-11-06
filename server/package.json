@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "apicache": "^0.3.4",
     "body-parser": "~1.15.1",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.1",
@@ -15,6 +16,7 @@
     "jade": "~1.11.0",
     "js-base64": "^2.1.9",
     "morgan": "~1.7.0",
+    "node-cache": "^4.1.0",
     "serve-favicon": "~2.3.0",
     "valid-url": "^1.0.9"
   }
