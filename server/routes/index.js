@@ -121,8 +121,29 @@ router.get('/files', function (req, res, next) {
     res.status(200)
       .send('{}');
   }
+});
 
+router.get('/codes', function (req, res, next) {
+  let repoUrl = req.query.repo
+  let repoBranch = req.query.branch
+  let repoFile = req.query.file
 
+  if (repoUrl == null || repoBranch == null || repoFile == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
+  // this equality check is not safe
+  if (isValidUrl(repoUrl)) {
+    gitfunctions.getCodes(repoUrl, repoBranch, repoFile, (error, data) => {
+      res.status(200)
+        .send(data);
+    });
+  } else {
+    res.status(200)
+      .send('{}');
+  }
 });
 
 var isValidUrl = (url) => {

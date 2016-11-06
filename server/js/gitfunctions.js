@@ -5,27 +5,7 @@ let repoPath = REPOS_DIR + '';
 
 const CHILD_PROCESS = require('child_process');
 const executive = require('executive');
-
-// turn off limits by default (BE CAREFUL)
-require('events')
-  .EventEmitter.prototype._maxListeners = 1000;
-
-// const shortlog = spawn('git', ['shortlog', '-n'], { stdio: ['inherit'] });
-//
-// ls.stdout.on('data', (data) => {
-//   console.log(`stdout: ${data}`);
-//   console.log(typeof data);
-// });
-//
-// ls.stderr.on('data', (data) => {
-//   console.log(`stderr: ${data}`);
-// });
-//
-// ls.on('close', (code) => {
-//   console.log(`child process exited with code ${code}`);
-// });
-
-
+const Base64 = require('js-base64').Base64;
 
 var gitClone = (repoUrl, callback) => {
   let repoPath = REPOS_DIR + getRepoName(repoUrl);
@@ -62,23 +42,6 @@ var gitLog = (repoPath, arguments, callback) => {
   });
 
 }
-
-//git log --shortstat --author="Bevin" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'
-//With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
-//insert into data.members array
-
-// var data = {
-//   "members": [
-//     {name: "name1", additions:"40", deletions:"30"},
-//     {name: "name2", additions:"30", deletions:"20"},
-//     {name: "name3", additions:"20", deletions:"30"},
-//     {name: "name4", additions:"30", deletions:"60"},
-//     {name: "name5", additions:"40", deletions:"40"},
-//     {name: "name6", additions:"10", deletions:"20"},
-//     {name: "name7", additions:"30", deletions:"40"}
-//   ]
-// };
-
 
 
 exports.getAuthors = (repoUrl, callback) => {
@@ -290,6 +253,49 @@ exports.getRepoFiles = (repoUrl, callback) => {
   })
 }
 
+exports.getCodes = (repoUrl, branch, file, callback) => {
+  console.log('[getCodes]');
+  let command = `git --no-pager show ${branch}:${file}`
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[getCodes]: [gitClone]');
+
+    if (error) {
+      console.log('[getCodes]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getCodes]: [gitClone] [error] [isRepoExist(error)]');
+
+        executeCommand(command, repoPath, (error, data) => {
+          callback(error, Base64.encode(data));
+        })
+      } else {
+        callback(error, ''); //sends nothin
+      }
+
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        callback(error, Base64.encode(data));
+      })
+    }
+  })
+}
+
+var codeStringToJsonArray = (string) => {
+
+  let arrayOfData = string.split('\n');
+  let json = '[';
+  let double_quotes = '\"'
+  let key = `${double_quotes}code${double_quotes}`
+  json += `{${key}:${double_quotes}${string_escape(arrayOfData[0])}${double_quotes}}`
+
+  for (var i = 1; i < arrayOfData.length; i++) {
+    json += (',');
+
+    // console.log(arrayOfData[i]);
+    json += `{${key}:${double_quotes}${arrayOfData[i]}${double_quotes}}`;
+  }
+  json += ']';
+  return json;
+}
 
 var executeCommand = (command, repoPath, callback) => {
   console.log(`[executeCommand]: ${command}`)
