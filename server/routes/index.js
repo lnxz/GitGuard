@@ -194,6 +194,31 @@ router.get('/commits', function (req, res, next) {
 
 });
 
+/* GET all authors stability */
+router.get('/commitCount', function (req, res, next) {
+  let repoUrl = req.query.repo
+
+  if (repoUrl == null) {
+    res.status(200)
+      .send('{}');
+    return;
+  }
+
+  // this equality check is not safe
+  if (isValidUrl(repoUrl)) {
+    gitfunctions.getCommitCount(repoUrl, (error, data) => {
+      res.status(200)
+        .send(data);
+        return;
+    });
+  } else {
+    res.status(200)
+      .send('{}');
+      return;
+  }
+
+});
+
 router.get('/files', function (req, res, next) {
   let repoUrl = req.query.repo
 

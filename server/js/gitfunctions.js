@@ -1,4 +1,5 @@
-require('events').EventEmitter.defaultMaxListeners = Infinity;
+require('events')
+  .EventEmitter.defaultMaxListeners = Infinity;
 const HTTP = 'http://';
 const HTTPS = 'https://';
 const REPOS_DIR = 'repositories/';
@@ -6,7 +7,8 @@ let repoPath = REPOS_DIR + '';
 
 const CHILD_PROCESS = require('child_process');
 const executive = require('executive');
-const Base64 = require('js-base64').Base64;
+const Base64 = require('js-base64')
+  .Base64;
 
 var gitClone = (repoUrl, callback) => {
   let repoPath = REPOS_DIR + getRepoName(repoUrl);
@@ -251,6 +253,34 @@ exports.getAuthorsCommits = (repoUrl, authorName, callback) => {
   })
 }
 
+exports.getCommitCount = (repoUrl, callback) => {
+  console.log('[getCommitCount]');
+  let command = `git --no-pager log --pretty=format:\"%ad\" --date=format:%d-%B-%y | awk \'{print $1}\' | uniq -c | awk \'{printf \"\\\"date\\\":\\\"%s\\\",\\\"commit_count\\\":\\\"%s\\\"\\n\",$2,$1}\'`
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[getCommitCount]: [gitClone]');
+
+    if (error) {
+      console.log('[getCommitCount]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getCommitCount]: [gitClone] [error] [isRepoExist(error)]');
+
+        executeCommand(command, repoPath, (error, data) => {
+          let json = stringToJsonArray(data)
+          callback(error, json);
+        })
+      } else {
+        callback(error, ''); //sends nothin
+      }
+
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        let json = stringToJsonArray(data)
+        callback(error, json);
+      })
+    }
+  })
+}
+
 exports.getRepoFiles = (repoUrl, callback) => {
   console.log('[getRepoFiles]');
   let command = `git ls-files | awk \'{ printf \"\\\"file\\\":\\\"%s\\\"\\n\", $0}\'`
@@ -263,7 +293,6 @@ exports.getRepoFiles = (repoUrl, callback) => {
         console.log('[getRepoFiles]: [gitClone] [error] [isRepoExist(error)]');
 
         executeCommand(command, repoPath, (error, data) => {
-          // jiafeng's command already format swee swee
           let json = stringToJsonArray(data)
           callback(error, json);
         })
@@ -273,7 +302,6 @@ exports.getRepoFiles = (repoUrl, callback) => {
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
-        // jiafeng's command already format swee swee
         let json = stringToJsonArray(data)
         callback(error, json);
       })
@@ -305,24 +333,6 @@ exports.getCodes = (repoUrl, branch, file, callback) => {
       })
     }
   })
-}
-
-var codeStringToJsonArray = (string) => {
-
-  let arrayOfData = string.split('\n');
-  let json = '[';
-  let double_quotes = '\"'
-  let key = `${double_quotes}code${double_quotes}`
-  json += `{${key}:${double_quotes}${string_escape(arrayOfData[0])}${double_quotes}}`
-
-  for (var i = 1; i < arrayOfData.length; i++) {
-    json += (',');
-
-    // console.log(arrayOfData[i]);
-    json += `{${key}:${double_quotes}${arrayOfData[i]}${double_quotes}}`;
-  }
-  json += ']';
-  return json;
 }
 
 var executeCommand = (command, repoPath, callback) => {
@@ -361,7 +371,23 @@ var stringToJsonArray = (string) => {
   return json;
 }
 
+var codeStringToJsonArray = (string) => {
 
+  let arrayOfData = string.split('\n');
+  let json = '[';
+  let double_quotes = '\"'
+  let key = `${double_quotes}code${double_quotes}`
+  json += `{${key}:${double_quotes}${string_escape(arrayOfData[0])}${double_quotes}}`
+
+  for (var i = 1; i < arrayOfData.length; i++) {
+    json += (',');
+
+    // console.log(arrayOfData[i]);
+    json += `{${key}:${double_quotes}${arrayOfData[i]}${double_quotes}}`;
+  }
+  json += ']';
+  return json;
+}
 
 exports.gitBlame = (repoUrl, callback) => {
   var childProcess = require('child_process'),
