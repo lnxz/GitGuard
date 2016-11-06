@@ -19,6 +19,7 @@ td, th {
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <!-- load the d3.js library -->
 <script src="https://d3js.org/d3.v4.min.js"></script>
+
 <script>
 
 //git log --format='%aN' | sort -u
@@ -29,6 +30,27 @@ td, th {
 //With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
 //insert into data.members array
 
+
+var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsAdditionsDeletions";
+var data = d3.json(url, function(response) {
+  console.log("Test");
+  console.log(response);
+  var data = new Array(response.length).fill(0);
+  for (var i = 0; i < response.length; i++) {
+    var obj = {
+      name: response[i].name,
+      additions: parseFloat(response[i].additions),
+      deletions: parseFloat(response[i].deletions)
+
+    }
+    data.push(obj);
+      console.log(data);
+      return data;
+  }
+})
+
+
+/*
 var data = {
   "members": [
     {name: "name1", additions:"40", deletions:"30"},
@@ -40,7 +62,7 @@ var data = {
     {name: "name7", additions:"30", deletions:"40"}
   ]
 };
-
+*/
 //git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\((.*?)\s+[\d]{4}/; print $1,"\n"' | sort -f | uniq -c | sort -n
 //Lists out all authors + number of lines of codes still persistant in latest version
 /*
@@ -56,17 +78,19 @@ d3.json(url, function(response) {
   }
   console.log(dataPersist);
   */
-var dataPersist = {
-  "members": [
-    {lines:"10", name:"name1"},
-    {lines:"11", name:"name2"},
-    {lines:"12", name:"name3"},
-    {lines:"15", name:"name6"},
-    {lines:"13", name:"name4"},
-    {lines:"14", name:"name5"},
-    {lines:"12", name:"name7"}
-  ]
-}
+
+      var dataPersist = {
+        "members": [
+          {lines:"10", name:"name1"},
+          {lines:"11", name:"name2"},
+          {lines:"12", name:"name3"},
+          {lines:"15", name:"name6"},
+          {lines:"13", name:"name4"},
+          {lines:"14", name:"name5"},
+          {lines:"12", name:"name7"}
+        ]
+      }
+
 
 var linePerArr = [];
 for (var i = 0; i < data.members.length; i++) {
@@ -88,8 +112,10 @@ for (var i = 0; i < data.members.length; i++) {
   };
   dataArr.push(obj);
 }
-
 console.log(dataArr);
+
+
+
 
 
 // The table generation function
@@ -130,8 +156,8 @@ function tabulate(data, columns) {
 }
 
 // render the table
-
  var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
+
 //})
 </script>
 </body>
