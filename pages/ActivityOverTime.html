@@ -17,6 +17,7 @@ td, th {
 
 <!-- load the d3.js library -->
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<svg width="960" height="500"></svg>
 <script>
 
 //git log --pretty=format:%aD" --date=short
@@ -25,7 +26,7 @@ td, th {
 var data = {
   "members": [
     {date: "2016-11-05"},
-    {date: "2016-11-05"},
+    {date: "2016-11-02"},
     {date: "2016-11-05"},
     {date: "2016-11-06"},
     {date: "2016-11-06"},
@@ -36,7 +37,7 @@ var data = {
     {date: "2016-10-05"},
     {date: "2016-10-23"},
     {date: "2016-10-23"},
-    {date: "2016-10-23"}
+    {date: "2016-10-25"}
   ]
 };
 
@@ -44,23 +45,93 @@ var data = {
 //Lists out all authors + number of lines of codes still persistant in latest version
 
 var dataArr = [];
+var idxFound = -1;
 for (var i = 0; i < data.members.length; i++)
 {
-  var obj =;
-}
 
-for (var i = 0; i < data.members.length; i++) {
-  var obj = {
-    Name: data.members[i].name,
-    additions: parseFloat(data.members[i].additions),
-    deletions: parseFloat(data.members[i].deletions),
-    LinesPersist: linePerArr[i],
-    Stability: linePerArr[i]*100/(parseFloat(data.members[i].additions)+parseFloat(data.members[i].deletions))
-  };
-  dataArr.push(obj);
-}
+  if (dataArr.length == 0)
+  {
+    var obj = {
+      date : data.members[i].date,
+      count : 1
+    }
+    dataArr.push(obj);
 
+  }else {
+    idxFound = -1;
+    for (var j = 0; j < dataArr.length; j ++)
+    {
+
+      if (data.members[i].date == dataArr[j].date)
+      {
+
+        idxFound = j;
+      }
+    }
+    if (idxFound > -1){
+      dataArr[idxFound].count ++;
+    }else {
+        var obj = {
+          date : data.members[i].date,
+          count : 1
+        }
+        dataArr.push(obj);
+    }
+  }
+
+}
 console.log(dataArr);
+
+var svg = d3.select("svg"),
+    margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = +svg.attr("width") - margin.left - margin.right,
+    height = +svg.attr("height") - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var parseTime = d3.timeParse("%d-%b-%y");
+
+var x = d3.scaleTime()
+    .rangeRound([0, width]);
+
+var y = d3.scaleLinear()
+    .rangeRound([height, 0]);
+
+var line = d3.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.count); });
+
+d3.tsv("data.tsv", function(d) {
+  d.date = parseTime(d.date);
+  d.close = +d.close;
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  x.domain(d3.extent(data, function(d) { return d.date; }));
+  y.domain(d3.extent(data, function(d) { return d.count; }));
+
+  g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  g.append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(y))
+    .append("text")
+      .attr("fill", "#000")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .style("text-anchor", "end")
+      .text("Price ($)");
+
+  g.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
+});
+
 
 </script>
 </body>
