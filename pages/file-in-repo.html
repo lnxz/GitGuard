@@ -20,7 +20,7 @@
     
     #file-contents th {
       border: 1px solid #d8d8d8;
-      padding: 10px 10px 10px 10px;
+      padding: 10px;
       border-collapse: collapse;
       text-align: left;
       display: none;
@@ -44,16 +44,46 @@
     .selected {
       background: aliceblue;
     }
+    
+    #commit-history {
+      border: 1px solid #d8d8d8;
+      border-collapse: collapse;
+      border-spacing: 0px;
+    }
+    
+    #commit-history th {
+      border: 1px solid #d8d8d8;
+      padding: 5px;
+      border-collapse: collapse;
+      text-align: left;
+      color: dimgrey;
+      background-color: aliceblue;
+    }
+    
+    #commit-history td:first-child {
+      border: 1px solid #d8d8d8;
+      text-align: right;
+    }
+    
+    #commit-history td {
+      border: 1px solid #d8d8d8;
+      padding: 3px;
+    }
+    
   </style>
 </head>
 <body>
 
   
   
-<div id="jstree" style="float: left; margin-top: 20px; margin-right: 10px;"></div>
-<div style="margin-top: 20px; margin-bottom: 100px; float:left;">
+<div id="jstree" style="margin-top: 20px; margin-right: 10px; float: left;"></div>
+<div style="margin-top: 20px; float: left;">
   <table id="file-contents">
   <tr><th colspan="2" id="file-header"></th></tr>
+  </table>
+</div>
+<div style="margin: 20px 0px 100px 10px; float: left;">
+  <table id="commit-history">
   </table>
 </div>
   
@@ -112,6 +142,9 @@
     drawDirTree(data);
   });
   
+  var selectedFile = "";
+  var lastSelectedRow;
+  
   function drawDirTree(tree) {
     $('#jstree').jstree( { 'core' : { 'data' : tree } } );
 
@@ -122,6 +155,8 @@
           filePath = data.node.text;
         }
         
+        selectedFile = filePath;
+         
         var getFileApi = api + "/codes?repo=" + repoURL + "&branch=master&file=" + filePath;
         
         $.ajax({
@@ -159,6 +194,9 @@
       var row = "<tr><td>" + rowIndex + "</td><td><pre><code>" + line[i] + "</code></pre></td></tr>";
       $('#file-contents').append(row);
     }
+    
+    showCommitHistory(1,line.length - 1);
+    
     $('#file-header').text(line.length + " (" + lineCount + " sloc)  |  " + fileSize);
     $('#file-header').show();
     
@@ -172,19 +210,39 @@
     });
   }
   
-  var lastSelectedRow;
-  
   function rowClick(currenttr, lock) {
     if (window.event.button === 0) {
       if (window.event.shiftKey) {
         clearAll();
-        selectRowsBetweenIndexes([lastSelectedRow.rowIndex, currenttr.rowIndex])
+        selectRowsBetweenIndexes([lastSelectedRow.rowIndex, currenttr.rowIndex]);
+        showCommitHistory(lastSelectedRow.rowIndex, currenttr.rowIndex);
       } else {
         clearAll();
         toggleRow(currenttr);
+        showCommitHistory(currenttr.rowIndex, currenttr.rowIndex);
       }
     }
+  }
+  
+  function showCommitHistory(start, end) {
+    var fileHistoryApi = api + "/whosYourDaddy?repo=" + repoURL + "&lineStart=" + start + "&lineEnd=" + end + "&file=" + selectedFile;
     
+    $('#commit-history').find("tr").remove();
+    
+    if (start != end) {
+      $('#commit-history').append('<tr><th colspan="4">' + 'lines ' + start + '-' + end + '</th></tr>');
+    } else {
+      $('#commit-history').append('<tr><th colspan="4">' + 'line ' + start + '</th></tr>');
+    }
+    $('#commit-history').append("<tr><td><b>No.</b></td><td><b>Date</b></td><td><b>Author</b></td><td><b>Commit</b></td></tr>");
+    
+    $.getJSON(fileHistoryApi, function(response) {
+      for (var i = 0; i < response.length; i++) {
+        var rowIndex = i + 1;
+        var row = "<tr><td>" + rowIndex + "</td><td>" + response[i].date + "</td><td>" + response[i].author + "</td><td>" + response[i].commit + "</td></tr>";
+        $('#commit-history').append(row);
+      }
+    });
   }
   
   function toggleRow(row) {

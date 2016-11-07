@@ -1,129 +1,123 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js" charset="utf-8"></script>
-    <script src="../js/nv.d3.js"></script>
-    <style>
-        text {
-            font: 12px sans-serif;
-        }
-        svg {
-            display: block;
-        }
-        html, body, #viz, svg {
-            margin: 0px;
-            padding: 0px;
-            height: 100%;
-            width: 100%;
-        }
-    </style>
+  <meta charset="utf-8">
+  <link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js" charset="utf-8"></script>
+  <script src="../js/nv.d3.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <style>
+    text {
+      font: 12px sans-serif;
+    }
+    svg {
+      display: block;
+    }
+    html, body, #viz, svg {
+      margin: 0px;
+      padding: 0px;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
 
 <div id="viz">
-    <svg></svg>
+  <svg></svg>
 </div>
 
 <script>
-  //git log --format='%aN' | sort -u
-  //get all authors
-  //for each author, do the next command to get json obj
+  var repoURL = "https://github.com/C-YanHua/CS3201-T04";
+  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
+  var url = api + "/authorsAdditionsDeletions?repo=" + repoURL;
   
-  //git log --shortstat --author="Bevin" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {print "additions: ", inserted, "deletions: ", deleted }'
-  //With a given author name, return me a json obj in this format {name: "name1", additions:"40", deletions:"30"}
-  //insert into data.members array
-  
-  var data = {
-    "members": [
-      {name: "name1", additions:"40", deletions:"30"},
-      {name: "name2", additions:"30", deletions:"20"},
-      {name: "name3", additions:"20", deletions:"30"},
-      {name: "name4", additions:"30", deletions:"60"},
-      {name: "name5", additions:"40", deletions:"40"},
-      {name: "name6", additions:"10", deletions:"20"},
-      {name: "name7", additions:"30", deletions:"40"}
-    ]
-  };
-  
-  data.members.sort(function(a,b) {
-    return (parseFloat(b.additions) + parseFloat(b.deletions)) - (parseFloat(a.additions) + parseFloat(a.deletions));
-  });
-  
-  var deletions = new Array();
-  var additions = new Array();
-  
-  for (var i = 0; i < data.members.length; i++) {
-    var size = parseFloat(data.members[i].deletions);
-    var obj = {
-      key: "Deletions",
-      series: 0,
-      size: size,
-      x: data.members[i].name,
-      y: size,
-    };
-    deletions.push(obj);
+  $.getJSON(url, function(response) {
+    var data = response;
     
-    var size2 = parseFloat(data.members[i].additions);
-    var obj2 = {
-      key: "Additions",
-      series: 0,
-      size: size2,
-      x: data.members[i].name,
-      y: size2,
-    };
-    additions.push(obj2);
-  }
-  
-  var dataArr = new Array();
-  dataArr.push(deletions);
-  dataArr.push(additions);
-  
-  var test_data = dataArr.map(function(data, i) {
-    return {
-      key: (i == 0) ? 'Deletions': 'Additions',
-      nonStackable: false,
-      values: data
-    };
+    data.sort(function(a,b) {
+      return (parseFloat(b.additions) + parseFloat(b.deletions)) - (parseFloat(a.additions) + parseFloat(a.deletions));
+    });
+    
+    var deletions = new Array();
+    var additions = new Array();
+
+    for (var i = 0; i < data.length; i++) {
+      var size = parseFloat(data[i].deletions);
+      var obj = {
+        key: "Deletions",
+        series: 0,
+        size: size,
+        x: data[i].name,
+        y: size,
+      };
+      deletions.push(obj);
+
+      var size2 = parseFloat(data[i].additions);
+      var obj2 = {
+        key: "Additions",
+        series: 0,
+        size: size2,
+        x: data[i].name,
+        y: size2,
+      };
+      additions.push(obj2);
+    }
+
+    var dataArr = new Array();
+    dataArr.push(deletions);
+    dataArr.push(additions);
+    
+    var formattedData = dataArr.map(function(d, i) {
+      return {
+        key: (i == 0) ? 'Deletions': 'Additions',
+        nonStackable: false,
+        values: d
+      };
+    });
+    
+    drawGraph(formattedData);
   });
-
-  nv.addGraph({
+  
+  
+  function drawGraph(formattedData) {
+    nv.addGraph({
       generate: function() {
-          var width = nv.utils.windowSize().width,
-              height = nv.utils.windowSize().height;
+        var width = nv.utils.windowSize().width,
+            height = nv.utils.windowSize().height;
 
-          var chart = nv.models.multiBarChart()
-              .width(width)
-              .height(height)
-              .stacked(true)
-              ;
+        var chart = nv.models.multiBarChart()
+            .width(width)
+            .height(height)
+            .stacked(true)
+            ;
 
-          chart.dispatch.on('renderEnd', function(){
-              console.log('Render Complete');
-          });
+        chart.dispatch.on('renderEnd', function(){
+          console.log('Render Complete');
+        });
 
-          var svg = d3.select('#viz svg').datum(test_data);
-          console.log('calling chart');
-          svg.transition().duration(0).call(chart);
+        var svg = d3.select('#viz svg').datum(formattedData);
+        console.log('calling chart');
+        svg.transition().duration(0).call(chart);
 
-          return chart;
+        return chart;
       },
       callback: function(graph) {
-          nv.utils.windowResize(function() {
-              var width = nv.utils.windowSize().width;
-              var height = nv.utils.windowSize().height;
-              graph.width(width).height(height);
+        nv.utils.windowResize(function() {
+          var width = nv.utils.windowSize().width;
+          var height = nv.utils.windowSize().height;
+          graph.width(width).height(height);
 
-              d3.select('#viz svg')
-                  .attr('width', width)
-                  .attr('height', height)
-                  .transition().duration(0)
-                  .call(graph);
+          d3.select('#viz svg')
+            .attr('width', width)
+            .attr('height', height)
+            .transition().duration(0)
+            .call(graph);
 
-          });
+        });
       }
-  });
+    });
+  };
 
 </script>
 </body>
