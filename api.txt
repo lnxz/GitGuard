@@ -33,5 +33,11 @@ usage: send a POST request, mimetype application/json
 with the following json in the body
 {"email":"quektyson@gmail.com","repo":"https://github.com/CS2103AUG2016-T17-C3/main.git"}
 
+/lastAccess
+usage: send a POST request, mimetype application/json
+with the following json in the body
+{"email":"quektyson@gmail.com"}
+
+
 
 
