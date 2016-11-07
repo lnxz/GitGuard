@@ -28,7 +28,7 @@
 </div>
 
 <script>
-  var repoURL = "https://github.com/lnxz/GitGuard";
+  var repoURL = "https://github.com/tungnk1993/scrapy";
   var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
   var url = api + "/authorsAdditionsDeletions?repo=" + repoURL;
   
@@ -63,6 +63,8 @@
         y: size2,
       };
       additions.push(obj2);
+      
+      if (i == 9) break;
     }
 
     var dataArr = new Array();
@@ -79,6 +81,7 @@
     
     drawGraph(formattedData);
   });
+  
   
   function drawGraph(formattedData) {
     nv.addGraph({
@@ -113,7 +116,6 @@
             .attr('height', height)
             .transition().duration(0)
             .call(graph);
-
         });
       }
     });

@@ -28,9 +28,10 @@ $(document).ready(function () {
 		names[i] = authorData[i].email;
 	}
 
-	names.forEach(function (item) {
-		var val = item.replace(/\s/g, "_");
-		var elem = "<option value='" + val + "'>" + item + "</option>";
+	authorData.forEach(function (item) {
+    var email = item.email
+		var val = email.replace(/\s/g, "_");
+		var elem = "<option>" + item.name + ", " + item.email + "</option>";
 		$('#custom-headers').append(elem);
 	});
 
@@ -85,9 +86,10 @@ function loadVisualizations() {
 	var i = 0;
 	$('.ms-selection > .ms-list li').each(function () {
 		if ($(this).css('display') != 'none') {
-			selected[i] = $(this).text();
+      var content = $(this).text().split(' ');
+			selected[i] = content[content.length - 1];
 			i++;
-			updateMinMax($(this).text());
+			updateMinMax(content[content.length - 1]);
 		}
 	});
 
@@ -98,14 +100,10 @@ function loadVisualizations() {
 
 	plotChart(selected, selectedData);
 
-
-
 	function isEmpty(str) {
 		return (!str || 0 === str.length);
 	}
 	function updateMinMax(email) {
-		//var repo =getRepoName();
-		//rawData = varPablohoffmanJSON;
 		 var rawData = (function () {
 		 	var json = null;
 		 	$.ajax({
@@ -210,7 +208,7 @@ function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
 			}
 			return array;
 		}
-		console.log("rawData.length : " + rawData.length);
+		
 		return finalData = {
 			"area": false,
 			"key": email,
@@ -271,7 +269,6 @@ function plotChart(selected, selectedData) {
 						}
 						var commitOverTotalCommits = e[x].point.commitkey.length.toString() + " / " + e[x].series.totalcommit.toString();
 						mytable.row.add([x + 1, e[x].series.key, xAxisFormatedDate, commitOverTotalCommits, allCommitKey]);
-						console.log(x);
 					}
 					mytable.draw();
 				});
