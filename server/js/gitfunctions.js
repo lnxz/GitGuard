@@ -177,7 +177,7 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
 
 exports.getAuthorsStability = (repoUrl, callback) => {
   console.log('[getAuthorsStability]');
-  let command = ` git ls-files -z | xargs -0n1 git blame -w | perl -n -e '/^.*?\\((.*?)\\s+[\\d]{4}/; print $1,"\\n"' | sort -f | uniq -c | sort -n | awk '{ printf "\\"lines\\":\\"%s\\",\\"name\\":\\"%s\\"\\n", $1, $2}'`
+  let command = `git ls-files -z | xargs -0n1 git blame -w | perl -n -e \'\/^.*?\\((.*?)\\s+[\\d]{4}\/; print $1,\"\\n\"\' | sort -f | uniq -c | sort -n | awk \'{ printf \"\\\"lines\\\":\\\"%s\\\",\\\"name\\\":\\\"%s\\\"\\n\", $1, substr($0, index($0, $2))}\'`
 
   gitClone(repoUrl, (error, data, repoPath) => {
     console.log('[getAuthorsStability]: [gitClone]');
@@ -425,7 +425,7 @@ exports.updateSubscribers = (subscriberEmail, subscriberRepo, callback) => {
             }
           }
 
-          if(foundEmail && foundRepo){
+          if (foundEmail && foundRepo) {
             return callback(error, '1');
           }
           //
