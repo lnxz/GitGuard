@@ -16,6 +16,9 @@ e.g. API/commits?repo=repoURL&author=Siro
 /files repo
 e.g. API/files?repo=repoURL
 
+/fileStats repo topN
+e.g. API/fileStats?repo=repoURL&topN=10
+
 /codes repo branch
 e.g. API/codes?repo=repoURL&branch=master&file=pages/compare.html
 

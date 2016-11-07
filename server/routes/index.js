@@ -256,7 +256,7 @@ router.get('/codes', function (req, res, next) {
 /* GET all  */
 router.get('/whosYourDaddy', function (req, res, next) {
   if (res._header) return; // someone already responded
-  
+
   let repoUrl = req.query.repo
   let lineStart = req.query.lineStart
   let lineEnd = req.query.lineEnd
@@ -270,6 +270,30 @@ router.get('/whosYourDaddy', function (req, res, next) {
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.whosYourDaddy(repoUrl, lineStart, lineEnd, file, (error, data) => {
+      return res.status(200)
+        .send(data);
+    });
+  } else {
+    return res.status(200)
+      .send('{}');
+  }
+
+});
+
+router.get('/fileStats', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
+  let repoUrl = req.query.repo
+  let topN = req.query.topN
+
+  if (repoUrl == null || topN == null) {
+    return res.status(200)
+      .send('{}');
+  }
+
+  // this equality check is not safe
+  if (isValidUrl(repoUrl)) {
+    gitfunctions.getFileStats(repoUrl, topN, (error, data) => {
       return res.status(200)
         .send(data);
     });

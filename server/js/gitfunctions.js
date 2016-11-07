@@ -346,6 +346,37 @@ exports.whosYourDaddy = (repoUrl, lineStart, lineEnd, file, callback) => {
   })
 }
 
+exports.getFileStats = (repoUrl, topN, callback) => {
+  console.log('[getFileStats]');
+  let command = `git ls-tree -r -l master | sort -n -k 4 | tail -n ${topN} | cut -d\\  -f4- | tr -s \\ | awk \'{printf \"\\\"file\\\":\\\"%s\\\",\\\"size\\\":\\\"%s\\\"\\n\",substr($0, index($0, $2)),$1}\'`
+  gitClone(repoUrl, (error, data, repoPath) => {
+    console.log('[whosYourDaddy]: [gitClone]');
+
+    if (error) {
+      console.log('[getFileStats]: [gitClone] [error]');
+      if (isRepoExist(error)) {
+        console.log('[getFileStats]: [gitClone] [error] [isRepoExist(error)]');
+
+        executeCommand(command, repoPath, (error, data) => {
+          if (error) {
+            return callback(error, '{}')
+          }
+          let json = stringToJsonArray(data)
+          return callback(error, json);
+        })
+      } else {
+        return callback(error, '{}'); //sends nothin
+      }
+
+    } else {
+      executeCommand(command, repoPath, (error, data) => {
+        let json = stringToJsonArray(data)
+        return callback(error, json);
+      })
+    }
+  })
+}
+
 var executeCommand = (command, repoPath, callback) => {
   console.log(`[executeCommand]: ${command}`)
   executive.quiet(command, {
