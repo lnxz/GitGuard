@@ -1,3 +1,4 @@
+
 $(document).ready(function () {
 	$('ul.sidebar-nav li').click(function (e) {
 		loadRepo($(this).find("a").text());
@@ -10,7 +11,7 @@ $(document).ready(function () {
 
 	//var repoURL = giveMeRepoUrl();
 
-	authorData = (function () {
+	preAuthorData = (function () {
 		var json = null;
 		$.ajax({
 			'async': false,
@@ -23,17 +24,30 @@ $(document).ready(function () {
 		});
 		return json;
 	})();
+	var authorData = new Array();
+	var j=0;
 
-	for (var i = 0; i < authorData.length; i++) {
-		names[i] = authorData[i].email;
+	for (var i = 0; i < preAuthorData.length; i++) {
+		if(preAuthorData[i].email!="none@none")
+		{
+			authorData[j] = preAuthorData[i];
+			j++;
+		}
 	}
 
+
 	authorData.forEach(function (item) {
-    var email = item.email
-		var val = email.replace(/\s/g, "_");
-		var elem = "<option>" + item.name + ", " + item.email + "</option>";
-		$('#custom-headers').append(elem);
-	});
+		var email = item.email
+			var val = email.replace(/\s/g, "_");
+			var elem = "<option>" + item.name + ", " + item.email + "</option>";
+			$('#custom-headers').append(elem);
+		});
+
+	// names.forEach(function (item) {
+	// 	var val = item.replace(/\s/g, "_");
+	// 	var elem = "<option value='" + val + "'>" + item + "</option>";
+	// 	$('#custom-headers').append(elem);
+	// });
 
 	$('.searchable').multiSelect({
 		selectableHeader: "<input type='text' class='search-input' autocomplete='off'>",
@@ -86,12 +100,16 @@ function loadVisualizations() {
 	var i = 0;
 	$('.ms-selection > .ms-list li').each(function () {
 		if ($(this).css('display') != 'none') {
-      var content = $(this).text().split(' ');
+
+      		var content = $(this).text().split(' ');
+			  console.log(content);
 			selected[i] = content[content.length - 1];
 			i++;
 			updateMinMax(content[content.length - 1]);
 		}
 	});
+
+	var mthList = getMonthListBtw(minDate, maxDate);
 
 	for (var x = 0; x < selected.length; x++) {
 		var series = x;
@@ -104,19 +122,22 @@ function loadVisualizations() {
 		return (!str || 0 === str.length);
 	}
 	function updateMinMax(email) {
-		 var rawData = (function () {
-		 	var json = null;
-		 	$.ajax({
-		 		'async': false,
-		 		'global': false,
-		 		'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
-		 		'dataType': "json",
-		 		'success': function (data) {
-		 			json = data;
-		 		}
-		 	});
-		 	return json;
-		 })();
+
+		//var repo =getRepoName();
+		//rawData = varPablohoffmanJSON;
+		var rawData = (function () {
+			var json = null;
+			$.ajax({
+				'async': false,
+				'global': false,
+				'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
+				'dataType': "json",
+				'success': function (data) {
+					json = data;
+				}
+			});
+			return json;
+		})();
 
 		rawData.sort(function (a, b) { var c = new Date(a.date); var d = new Date(b.date); return c - d; });
 		var rawDataMinDate = reconstructRawDate(new Date(rawData[0].date));
@@ -137,6 +158,8 @@ function loadVisualizations() {
 function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
 	var formatedData;
 	//var repo =getRepoName();
+	//var rawData = varPablohoffmanJSON;
+	console.log(email);
 	var rawData = (function () {
 		var json = null;
 		$.ajax({
@@ -150,7 +173,6 @@ function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
 		});
 		return json;
 	})();
-	//rawData = varPablohoffmanJSON;
 
 	rawData.sort(function (a, b) { var c = new Date(a.date); var d = new Date(b.date); return c - d; });
 	//console.log(rawData);
@@ -208,7 +230,7 @@ function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
 			}
 			return array;
 		}
-		
+		//console.log("rawData.length : " + rawData.length);
 		return finalData = {
 			"area": false,
 			"key": email,
@@ -216,36 +238,48 @@ function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
 			"firstCommitDate": individualFirstCommitDate,
 			"lastCommitDate": individualLastCommitDate,
 			"totalcommit": rawData.length,
-
 		};
 	}
 
-}
 
+}
+function getMonthListBtw(minDate, maxDate) {
+	var startDate = moment(minDate, moment.ISO_8601);
+	var endDate = moment(maxDate, moment.ISO_8601).endOf("month");
+	var allMonthsInPeriod = [];
+	while (startDate.isBefore(endDate)) {
+		allMonthsInPeriod.push(startDate.format("MM-YYYY"));
+		startDate = startDate.add(1, "month");
+	};
+	return allMonthsInPeriod;
+
+}
 function plotChart(selected, selectedData) {
 	var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 	nv.addGraph(function () {
-		var chart = nv.models.lineWithFocusChart();
+		var chart = nv.models.lineWithFocusChart().width(1720).height(720);;
 		chart.xAxis.axisLabel('Date').tickFormat(function (d) { return d3.time.format('%d-%b-%y')(new Date(d)); });
+
 		chart.focusHeight(50 + 20);
 		chart.focusMargin({ "bottom": 20 + 20 });
 		chart.x2Axis.axisLabel('Date').tickFormat(function (d) { return d3.time.format('%d-%b-%y')(new Date(d)); });
+
 		chart.yAxis.tickFormat(d3.format('d'));
 		chart.y2Axis.tickFormat(d3.format('d'));
 		if (selectedData.length > 0) {
 			chart.lines.dispatch.on('elementClick', function (e) {
 
-				console.log("e[0].series.totalcommit.toString() : " + e[0].series.totalcommit.toString());
-				console.log("e " + e);
-				console.log("total number of points: " + e.length);
-				console.log("correct email address: " + e[0].series.key);
-				console.log("total number of commit hash code: " + e[0].point.commitkey.length);
-				console.log("total number of commit hash code: " + e[0].point.commitkey.toString());
-				console.log("correct label (x-axis point): " + e[0].point.label);
-				console.log("correct label (x-axis point): " + e[0].point.label.toString());
-				var xAxisDate = new Date(e[0].point.label);
-				var xAxisFormatedDate = xAxisDate.getDate() + " " + MONTH[xAxisDate.getMonth()] + " " + xAxisDate.getFullYear();
-				console.log("correct label (x-axis point): " + xAxisDate.getDate() + " " + MONTH[xAxisDate.getMonth()] + " " + xAxisDate.getFullYear());
+				// console.log("e[0].series.totalcommit.toString() : " + e[0].series.totalcommit.toString());
+				// console.log("e " + e);
+				// console.log("total number of points: " + e.length);
+				// console.log("correct email address: " + e[0].series.key);
+				// console.log("total number of commit hash code: " + e[0].point.commitkey.length);
+				// console.log("total number of commit hash code: " + e[0].point.commitkey.toString());
+				// console.log("correct label (x-axis point): " + e[0].point.label);
+				// console.log("correct label (x-axis point): " + e[0].point.label.toString());
+				// var xAxisDate = new Date(e[0].point.label);
+				// var xAxisFormatedDate = xAxisDate.getDate() + " " + MONTH[xAxisDate.getMonth()] + " " + xAxisDate.getFullYear();
+				// console.log("correct label (x-axis point): " + xAxisDate.getDate() + " " + MONTH[xAxisDate.getMonth()] + " " + xAxisDate.getFullYear());
 
 
 				$(document).ready(function () {
@@ -269,24 +303,22 @@ function plotChart(selected, selectedData) {
 						}
 						var commitOverTotalCommits = e[x].point.commitkey.length.toString() + " / " + e[x].series.totalcommit.toString();
 						mytable.row.add([x + 1, e[x].series.key, xAxisFormatedDate, commitOverTotalCommits, allCommitKey]);
+						console.log(x);
 					}
 					mytable.draw();
 				});
 
-
-
-
 			});
 		}
 		else if (selectedData.length == 0) {
-			console.log("in here");
+
 			$(document).ready(function () {
 				var oTable = $('#tblItems').dataTable();
 
 				// Immediately 'nuke' the current rows (perhaps waiting for an Ajax callback...)
 				oTable.fnClearTable();
 			});
-			chart.noData("Nothing to see here.");
+			chart.noData("Nothing to see here. ");
 
 		}
 		chart.useInteractiveGuideline(true);
