@@ -74,8 +74,8 @@
 </head>
 <body>
 
-  
-  
+
+<h1 id="repoUrl"></h1>  
 <div id="jstree" style="margin-top: 20px; margin-right: 10px; float: left;"></div>
 <div style="margin-top: 20px; float: left;">
   <table id="file-contents">
@@ -88,9 +88,11 @@
 </div>
   
 <script>
-  var repoURL = "https://github.com/C-YanHua/CS3201-T04";
+  var repoURL = "https://github.com/lnxz/GitGuard";
   var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
   var url = api + "/files?repo=" + repoURL;
+  
+  $('#repoUrl').text(repoURL);
   
   $.getJSON(url, function(response) {
     response.sort(function(a,b) {
@@ -156,7 +158,10 @@
         }
         
         selectedFile = filePath;
-         
+        
+        if (filePath.split(' ').length > 1) {
+          filePath = "'" + filePath + "'"; 
+        }
         var getFileApi = api + "/codes?repo=" + repoURL + "&branch=master&file=" + filePath;
         
         $.ajax({
@@ -181,6 +186,7 @@
       }
     }
     
+    var fileType = selectedFile.substr(selectedFile.lastIndexOf('.') + 1);
     var fileSize = formatSizeUnits((encodedString.length / 4 * 3) - numOfEquals);
     var lineCount = 0;
     var line = fileContents.split("\n");
@@ -191,7 +197,12 @@
       }
       
       var rowIndex = i + 1;
-      var row = "<tr><td>" + rowIndex + "</td><td><pre><code>" + line[i] + "</code></pre></td></tr>";
+      
+      if (fileType.localeCompare('html') == 0) {
+        var row = "<tr><td>" + rowIndex + "</td><td><XMP>" + line[i] + "</XMP></td></tr>";
+      } else {
+        var row = "<tr><td>" + rowIndex + "</td><td><pre><code>" + line[i] + "</code></pre></td></tr>";
+      }
       $('#file-contents').append(row);
     }
     
@@ -199,6 +210,11 @@
     
     $('#file-header').text(line.length + " (" + lineCount + " sloc)  |  " + fileSize);
     $('#file-header').show();
+    
+    $('XMP').each(function(i, block) {
+      console.log('here');
+      $(this).css('margin', '0px');
+    });
     
     $('pre code').each(function(i, block) {
       hljs.highlightBlock(block);
@@ -229,18 +245,22 @@
     
     $('#commit-history').find("tr").remove();
     
-    if (start != end) {
-      $('#commit-history').append('<tr><th colspan="4">' + 'lines ' + start + '-' + end + '</th></tr>');
-    } else {
-      $('#commit-history').append('<tr><th colspan="4">' + 'line ' + start + '</th></tr>');
-    }
-    $('#commit-history').append("<tr><td><b>No.</b></td><td><b>Date</b></td><td><b>Author</b></td><td><b>Commit</b></td></tr>");
-    
     $.getJSON(fileHistoryApi, function(response) {
-      for (var i = 0; i < response.length; i++) {
-        var rowIndex = i + 1;
-        var row = "<tr><td>" + rowIndex + "</td><td>" + response[i].date + "</td><td>" + response[i].author + "</td><td>" + response[i].commit + "</td></tr>";
-        $('#commit-history').append(row);
+      if (response.length == null) {
+      } else {
+        if (start != end) {
+          $('#commit-history').append('<tr><th colspan="4">' + 'lines ' + start + '-' + end + '</th></tr>');
+        } else {
+          $('#commit-history').append('<tr><th colspan="4">' + 'line ' + start + '</th></tr>');
+        }
+        
+        $('#commit-history').append("<tr><td><b>No.</b></td><td><b>Date</b></td><td><b>Author</b></td><td><b>Commit</b></td></tr>");
+        
+        for (var i = 0; i < response.length; i++) {
+          var rowIndex = i + 1;
+          var row = "<tr><td>" + rowIndex + "</td><td>" + response[i].date + "</td><td>" + response[i].author + "</td><td>" + response[i].commit + "</td></tr>";
+          $('#commit-history').append(row);
+        }
       }
     });
   }

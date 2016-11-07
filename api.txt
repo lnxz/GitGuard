@@ -17,7 +17,7 @@ e.g. API/commits?repo=repoURL&author=Siro
 e.g. API/files?repo=repoURL
 
 /codes repo branch
-e.g. API/commits?repo=repoURL&branch=master&file=pages/compare.html
+e.g. API/codes?repo=repoURL&branch=master&file=pages/compare.html
 
 /whosYourDaddy repo lineStart lineEnd file
 e.g. API/whosYourDaddy?repo=repoURL&startLine=1&endLine=3&file=pages/compare.html
