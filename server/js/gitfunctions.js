@@ -5,6 +5,7 @@ const HTTPS = 'https://';
 const REPOS_DIR = 'repositories/';
 let repoPath = REPOS_DIR + '';
 
+const filesystem = require('fs')
 const CHILD_PROCESS = require('child_process');
 const executive = require('executive');
 const Base64 = require('js-base64')
@@ -375,6 +376,118 @@ exports.getFileStats = (repoUrl, topN, callback) => {
       })
     }
   })
+}
+
+exports.updateSubscribers = (subscriberEmail, subscriberRepo, callback) => {
+  console.log('[updateSubscribers]');
+  let extension = `.txt`
+  let filename = 'subscribers'
+  let originalFilename = filename + extension
+  let updatedFilename = `${filename}_updated${extension}`
+  let downloadCommand = `java -jar download.jar gitguard-subscribers subscribers.txt subscribers.txt`
+  let uploadCommand = `java -jar upload.jar gitguard-subscribers subscribers.txt ${updatedFilename}`
+
+  let date = new Date()
+  let dateTime = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+
+  // download the subscriber lsit
+  executive.quiet(downloadCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.log(error)
+      return callback(error, '0');
+    }
+
+    let email = subscriberEmail.trim();
+    let repo = subscriberRepo.trim();
+
+    //readfile
+    filesystem.readFile(originalFilename, 'utf8', function (err, contents) {
+      if (err) throw err;
+
+      //update the list
+      let foundEmail = false;
+      let subscribers = contents.split('\n')
+
+      for (var i = 0; i < subscribers.length; i++) {
+        let details = subscribers[i].split(';')
+
+        // found email
+        if (details[0] === email) {
+          foundEmail = true;
+          console.log(`[found]:${subscribers[i]}'`)
+
+          // check if repo exist in string
+          let foundRepo = false;
+          for (let detail of details) {
+            if (detail === repo) {
+              foundRepo = true
+              break
+            }
+          }
+
+          if(foundEmail && foundRepo){
+            return callback(error, '1');
+          }
+          //
+          if (!foundRepo) {
+            details[1] = dateTime //update the datetime
+            details.push(`${repo}`) //add new repo to the back
+
+            let newDetails = ''
+            for (var z = 0; z < details.length; z++) {
+              console.log(details[z])
+              if (z) {
+                newDetails += ';'
+              }
+              newDetails += details[z];
+            }
+
+            console.log(`[new string]: ${newDetails}`)
+            subscribers[i] = newDetails //update
+            console.log(`[updated]:${subscribers[i]}'`)
+          }
+
+        }
+
+        if (foundEmail) {
+          break;
+        }
+      }
+
+      if (!foundEmail) {
+        console.log(`[Adding new]: ${email};${dateTime};${repo}`)
+        subscribers.push(`${email};${dateTime};${repo}`)
+      }
+
+
+      //write to file
+      let file = filesystem.createWriteStream(updatedFilename);
+
+      file.on('error', function (err) {
+        return callback(error, '0')
+      });
+
+      for (let subscriber of subscribers) {
+        console.log(subscriber)
+        file.write(`${subscriber}\n`)
+      }
+
+      file.end();
+    });
+
+    // upload the subscriber list
+    executive.quiet(uploadCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.log(error)
+        return callback(error, '0');
+      }
+      console.log('[Uploaded to S3]')
+      return callback(error, '1');
+    })
+
+  })
+
+
 }
 
 var executeCommand = (command, repoPath, callback) => {

@@ -304,6 +304,27 @@ router.get('/fileStats', function (req, res, next) {
 
 });
 
+router.post('/subscribe', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
+  let subscriberEmail = req.body.email
+  let subscriberRepo = req.body.repo
+
+  console.log(`[Subscriber email]: ${subscriberEmail}`)
+  console.log(`[Subscriber repo]: ${subscriberRepo}`)
+
+  if (subscriberEmail == null || subscriberRepo == null) {
+    return res.status(200)
+      .send('0');
+  }
+
+  gitfunctions.updateSubscribers(subscriberEmail, subscriberRepo, (error, data) => {
+    return res.status(200)
+      .send(data);
+  });
+
+});
+
 var isValidUrl = (url) => {
   let urlObject = nodeUrl.parse(url)
   let hostname = urlObject.host
