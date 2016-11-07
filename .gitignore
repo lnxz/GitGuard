@@ -2,3 +2,4 @@ repositories/
 node_modules/
 npm-debug.log
 *.jar
+subscribers.txt
