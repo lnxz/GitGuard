@@ -10,7 +10,7 @@
   input.repo-input {
     box-sizing: border-box;
     -moz-box-sizing: border-box;
-    width: 300px;
+    width: 250px;
     height: 30px;
     margin: 10px;
     border-radius: 4px;
@@ -44,6 +44,7 @@ $(document).ready(function() {
       }
       elem.attr("href", _href + '?repo=' + repoURL);
     });
+    document.getElementById('iframe_body').src = document.getElementById('iframe_body').src;
   });
 });
   
@@ -53,6 +54,8 @@ function promptEmail() {
   if (email != null) {
     //pass email string -> email1;email2;email3
     //to server via url?? idk
+    console.log(new Date());
+    console.log(email);
   }
 }
   
@@ -70,15 +73,15 @@ function promptEmail() {
       <li><a href="pages/LargestFiles.html" target="iframe_body">Largest Files</a></li>
     </ul>
     <ul class="nav navbar-nav navbar-right">
-      <li style="margin: 10px;"><span style="color: white; height: 30px; font-size: 21px; padding: 0px 5px 0px 10px;">Repo URL: </span></li>
+      <li style="margin: 10px 0px 10px 0px;"><span style="color: white; height: 30px; font-size: 21px;">Repo URL: </span></li>
       <li><input class="repo-input" id="repo" type="text"/></li>
-      <li><button class="btn btn-default" style="margin: 10px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="promptEmail()">Subscribe</button></li>
+      <li><button class="btn btn-default" style="margin: 10px 10px 10px 0px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="promptEmail()">Subscribe</button></li>
     </ul>
   </div>
 </nav>
   
 <div style="position:absolute; left: 0; right: 0; bottom: 0; top: 50px;">
-  <iframe height="100%" width="100%" src="pages/home.html" name="iframe_body"></iframe>
+  <iframe height="100%" width="100%" src="pages/home.html" id="iframe_body" name="iframe_body"></iframe>
 </div>
   
 
