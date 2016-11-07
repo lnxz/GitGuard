@@ -490,6 +490,102 @@ exports.updateSubscribers = (subscriberEmail, subscriberRepo, callback) => {
 
 }
 
+exports.updateLastAccess = (subscriberEmail, callback) => {
+  console.log('[updateLastAccess]');
+  let extension = `.txt`
+  let filename = 'subscribers'
+  let originalFilename = filename + extension
+  let updatedFilename = `${filename}_updated${extension}`
+  let downloadCommand = `java -jar download.jar gitguard-subscribers subscribers.txt subscribers.txt`
+  let uploadCommand = `java -jar upload.jar gitguard-subscribers subscribers.txt ${updatedFilename}`
+
+  let date = new Date()
+  let dateTime = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+
+  // download the subscriber lsit
+  executive.quiet(downloadCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.log(error)
+      return callback(error, '0');
+    }
+
+    let email = subscriberEmail.trim();
+
+    //readfile
+    filesystem.readFile(originalFilename, 'utf8', function (err, contents) {
+      if (err) throw err;
+
+      //update the list
+      let foundEmail = false;
+      let subscribers = contents.split('\n')
+
+      for (var i = 0; i < subscribers.length; i++) {
+        let details = subscribers[i].split(';')
+
+        // found email
+        if (details[0] === email) {
+          foundEmail = true;
+          console.log(`[found]:${subscribers[i]}'`)
+
+
+          details[1] = dateTime //update the datetime
+
+          let newDetails = ''
+          for (var z = 0; z < details.length; z++) {
+            console.log(details[z])
+            if (z) {
+              newDetails += ';'
+            }
+            newDetails += details[z];
+          }
+
+          console.log(`[new string]: ${newDetails}`)
+          subscribers[i] = newDetails //update
+          console.log(`[updated]:${subscribers[i]}'`)
+
+        }
+
+        if (foundEmail) {
+          break;
+        }
+      }
+
+      if (!foundEmail) {
+        console.log(`[Adding new]: ${email};${dateTime}`)
+        subscribers.push(`${email};${dateTime}`)
+      }
+
+
+      //write to file
+      let file = filesystem.createWriteStream(updatedFilename);
+
+      file.on('error', function (err) {
+        return callback(error, '0')
+      });
+
+      for (let subscriber of subscribers) {
+        console.log(subscriber)
+        file.write(`${subscriber}\n`)
+      }
+
+      file.end();
+    });
+
+    // upload the subscriber list
+    executive.quiet(uploadCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.log(error)
+        return callback(error, '0');
+      }
+      console.log('[Uploaded to S3]')
+      return callback(error, '1');
+    })
+
+  })
+
+
+}
+
 var executeCommand = (command, repoPath, callback) => {
   console.log(`[executeCommand]: ${command}`)
   executive.quiet(command, {

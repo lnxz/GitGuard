@@ -325,6 +325,25 @@ router.post('/subscribe', function (req, res, next) {
 
 });
 
+router.post('/lastAccess', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
+  let subscriberEmail = req.body.email
+
+  console.log(`[lastAccess email]: ${subscriberEmail}`)
+
+  if (subscriberEmail == null) {
+    return res.status(200)
+      .send('0');
+  }
+
+  gitfunctions.updateLastAccess(subscriberEmail, (error, data) => {
+    return res.status(200)
+      .send(data);
+  });
+
+});
+
 var isValidUrl = (url) => {
   let urlObject = nodeUrl.parse(url)
   let hostname = urlObject.host
