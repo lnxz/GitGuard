@@ -13,9 +13,8 @@ router.get('/authors', function (req, res, next) {
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check may not be enough. not too sure if there's a need to sanitize
@@ -26,9 +25,8 @@ router.get('/authors', function (req, res, next) {
         console.log('[isNOTLatest]')
         gitfunctions.getAuthors(repoUrl, (error, data) => {
           myCache.set(req.url, data)
-          res.status(200)
+          return res.status(200)
             .send(data);
-          return;
         });
       }
 
@@ -41,22 +39,19 @@ router.get('/authors', function (req, res, next) {
           myCache.set(req.url, data)
           console.log(req.url)
           console.log(myCache.keys())
-          res.status(200)
+          return res.status(200)
             .send(data);
-          return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
-        res.status(200)
+        return res.status(200)
           .send(data);
-        return;
       }
 
     })
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
 });
@@ -66,9 +61,8 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
@@ -78,9 +72,8 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
         console.log('[isNOTLatest]')
         gitfunctions.getAuthorsAdditionsDeletions(repoUrl, (error, data) => {
           myCache.set(req.url, data)
-          res.status(200)
+          return res.status(200)
             .send(data);
-          return;
         });
       }
 
@@ -93,22 +86,19 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
           myCache.set(req.url, data)
           console.log(req.url)
           console.log(myCache.keys())
-          res.status(200)
+          return res.status(200)
             .send(data);
-          return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
-        res.status(200)
+        return res.status(200)
           .send(data);
-        return;
       }
 
     })
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
 
@@ -119,9 +109,8 @@ router.get('/authorsStability', function (req, res, next) {
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
@@ -132,9 +121,8 @@ router.get('/authorsStability', function (req, res, next) {
         console.log('[isNOTLatest]')
         gitfunctions.getAuthorsStability(repoUrl, (error, data) => {
           myCache.set(req.url, data)
-          res.status(200)
+          return res.status(200)
             .send(data);
-          return;
         });
       }
 
@@ -147,23 +135,20 @@ router.get('/authorsStability', function (req, res, next) {
           myCache.set(req.url, data)
           console.log(req.url)
           console.log(myCache.keys())
-          res.status(200)
+          return res.status(200)
             .send(data);
-          return;
         });
       } else {
         console.log('[isLatest]: [cache is NOT empty]')
-        res.status(200)
+        return res.status(200)
           .send(data);
-        return;
       }
 
     })
 
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
 });
@@ -174,22 +159,19 @@ router.get('/commits', function (req, res, next) {
   let authorName = req.query.author
 
   if (repoUrl == null || authorName == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.getAuthorsCommits(repoUrl, authorName, (error, data) => {
-      res.status(200)
+      return res.status(200)
         .send(data);
-      return;
     });
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
 });
@@ -199,22 +181,19 @@ router.get('/commitCount', function (req, res, next) {
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.getCommitCount(repoUrl, (error, data) => {
-      res.status(200)
+      return res.status(200)
         .send(data);
-      return;
     });
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
 });
@@ -223,22 +202,19 @@ router.get('/files', function (req, res, next) {
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.getRepoFiles(repoUrl, (error, data) => {
-      res.status(200)
+      return res.status(200)
         .send(data);
-      return;
     });
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 });
 
@@ -248,22 +224,19 @@ router.get('/codes', function (req, res, next) {
   let repoFile = req.query.file
 
   if (repoUrl == null || repoBranch == null || repoFile == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.getCodes(repoUrl, repoBranch, repoFile, (error, data) => {
-      res.status(200)
+      return res.status(200)
         .send(data);
-      return;
     });
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 });
 
@@ -276,22 +249,19 @@ router.get('/whosYourDaddy', function (req, res, next) {
   let file = req.query.file
 
   if (repoUrl == null || lineStart == null || lineEnd == null || file == null) {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
   // this equality check is not safe
   if (isValidUrl(repoUrl)) {
     gitfunctions.whosYourDaddy(repoUrl, lineStart, lineEnd, file, (error, data) => {
-      res.status(200)
+      return res.status(200)
         .send(data);
-      return;
     });
   } else {
-    res.status(200)
+    return res.status(200)
       .send('{}');
-    return;
   }
 
 });
