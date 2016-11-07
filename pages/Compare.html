@@ -143,8 +143,8 @@
       if ($(this).css('display') != 'none') {
         var content = $(this).text().split(' ');
         selected[i] = content[content.length - 1];
+        updateMinMax(selected[i]);
         i++;
-        updateMinMax(content[content.length - 1]);
       }
     });
 

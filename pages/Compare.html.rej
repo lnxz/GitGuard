@@ -1,0 +1,9 @@
+diff a/pages/Compare.html b/pages/Compare.html	(rejected hunks)
+@@ -136,6 +136,7 @@
+   
+   function loadVisualizations(url) {
+     var selected = new Array();
++    var selectedNames = new Array();
+     var selectedData = [];
+     var minDate; var maxDate;
+     var i = 0;
