@@ -19,8 +19,7 @@ var gitClone = (repoUrl, callback) => {
       console.log('Error code: ' + error.code);
       console.log('Signal received: ' + error.signal);
     }
-    callback(error, stdout, repoPath);
-    return
+    return callback(error, stdout, repoPath);
   });
 
   command.on('exit', function (code) {
@@ -38,7 +37,7 @@ var gitLog = (repoPath, arguments, callback) => {
       // console.log('Signal received: ' + error.signal);
     }
     // success case
-    callback(error, stdout);
+    return callback(error, stdout);
   });
 
   command.on('exit', function (code) {
@@ -60,16 +59,16 @@ exports.isRepoLatest = (repoUrl, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           let isLatest = data.includes('Already up-to-date.')
-          callback(isLatest);
+          return callback(isLatest);
         })
       } else {
-        callback(error, ''); //sends nothin
+        return callback(error, ''); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let isLatest = data.includes('Already up-to-date.')
-        callback(isLatest);
+        return callback(isLatest);
       })
     }
   })
@@ -88,15 +87,13 @@ exports.getAuthors = (repoUrl, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
-          callback(error, json);
-          return
+          return callback(error, json);
         })
       }
     } else {
       gitLog(repoPath, arguments, (error, data) => {
         json = stringToJsonArray(data);
-        callback(error, json);
-        return
+        return callback(error, json);
       });
     }
   });
@@ -118,7 +115,6 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
           let authors = data.split('\n');
 
           let commandArray = [];
-          // commandArray.push(`cd ${repoPath}`) //need to get into the repo first
 
           for (var i = 0; i < authors.length; i++) {
 
@@ -126,17 +122,11 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
             if (authors[i].length === 0) {
               break;
             }
-            // if (i) {
-            //   command += '&&'
-            // }
-            // command += `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf ""additions":%s,"deletions":%s\\n", inserted, deleted}'`;
 
             let command = `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf "\\"name\\":\\"${authors[i]}\\",\\"additions\\":%i,\\"deletions\\":%i\\n", inserted, deleted}'`;
             commandArray.push(command);
           }
 
-
-          // // console.log(commandArray);
           executive.parallel(commandArray, {
             cwd: repoPath
           }, (err, stdout, stderr) => {
@@ -144,13 +134,8 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
               console.log(err)
             }
 
-            // console.log(stdout);
-            // let stats = stdout.split('\n')
-
-
             let json = stringToJsonArray(stdout)
-            callback(error, json);
-            return
+            return callback(error, json);
           });
 
         });
@@ -162,7 +147,6 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
         let authors = data.split('\n');
 
         let commandArray = [];
-        // commandArray.push(`cd ${repoPath}`) //need to get into the repo first
 
         for (var i = 0; i < authors.length; i++) {
 
@@ -170,10 +154,6 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
           if (authors[i].length === 0) {
             break;
           }
-          // if (i) {
-          //   command += '&&'
-          // }
-          // command += `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf ""additions":%s,"deletions":%s\\n", inserted, deleted}'`;
 
           let command = `git log --shortstat --author="${authors[i]}" | grep -E "fil(e|es) changed" | awk '{inserted+=$4; deleted+=$6} END {printf "\\"name\\":\\"${authors[i]}\\",\\"additions\\":%i,\\"deletions\\":%i\\n", inserted, deleted}'`;
           commandArray.push(command);
@@ -187,8 +167,7 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
           }
 
           let json = stringToJsonArray(stdout)
-          callback(error, json);
-          return
+          return callback(error, json);
         });
       });
     }
@@ -209,19 +188,16 @@ exports.getAuthorsStability = (repoUrl, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
-          callback(error, json);
-          return
+          return callback(error, json);
         })
       } else {
-        callback(error, ''); //sends nothin
-        return
+        return callback(error, ''); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
-        callback(error, json);
-        return
+        return callback(error, json);
       })
     }
   })
@@ -241,19 +217,16 @@ exports.getAuthorsCommits = (repoUrl, authorName, callback) => {
 
         executeCommand(command, repoPath, (error, json) => {
           // jiafeng's command already format swee swee
-          callback(error, json);
-          return
+          return callback(error, json);
         })
       } else {
-        callback(error, ''); //sends nothin
-        return
+        return callback(error, ''); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, json) => {
         // jiafeng's command already format swee swee
-        callback(error, json);
-        return
+        return callback(error, json);
       })
     }
   })
@@ -272,19 +245,16 @@ exports.getCommitCount = (repoUrl, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
-          callback(error, json);
-          return
+          return callback(error, json);
         })
       } else {
-        callback(error, ''); //sends nothin
-        return
+        return callback(error, ''); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
-        callback(error, json);
-        return
+        return callback(error, json);
       })
     }
   })
@@ -303,19 +273,16 @@ exports.getRepoFiles = (repoUrl, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
-          callback(error, json);
-          return
+          return callback(error, json);
         })
       } else {
-        callback(error, ''); //sends nothin
-        return
+        return callback(error, ''); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
-        callback(error, json);
-        return
+        return callback(error, json);
       })
     }
   })
@@ -333,18 +300,15 @@ exports.getCodes = (repoUrl, branch, file, callback) => {
         console.log('[getCodes]: [gitClone] [error] [isRepoExist(error)]');
 
         executeCommand(command, repoPath, (error, data) => {
-          callback(error, Base64.encode(data));
-          return
+          return callback(error, Base64.encode(data));
         })
       } else {
-        callback(error, ''); //sends nothin
-        return
+        return callback(error, ''); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
-        callback(error, Base64.encode(data));
-        return
+        return callback(error, Base64.encode(data));
       })
     }
   })
@@ -364,23 +328,19 @@ exports.whosYourDaddy = (repoUrl, lineStart, lineEnd, file, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           if (error) {
-            callback(error, '{}')
-            return;
+            return callback(error, '{}')
           }
           let json = stringToJsonArray(data)
-          callback(error, json);
-          return;
+          return callback(error, json);
         })
       } else {
-        callback(error, '{}'); //sends nothin
-        return
+        return callback(error, '{}'); //sends nothin
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
-        callback(error, json);
-        return
+        return callback(error, json);
       })
     }
   })
@@ -394,8 +354,7 @@ var executeCommand = (command, repoPath, callback) => {
     if (error) {
       console.log(error)
     }
-    callback(error, stdout);
-    return
+    return callback(error, stdout);
   })
 }
 
@@ -452,7 +411,7 @@ exports.gitBlame = (repoUrl, callback) => {
     }
     // console.log( 'Child Process STDOUT: ' + stdout );
     //console.log( 'Child Process STDERR: ' + stderr );
-    callback(stdout);
+    return callback(stdout);
   });
 
   gitblame.on('exit', function (code) {
@@ -485,8 +444,3 @@ var isRepoExist = (reasonForFailure) => {
   let errorMessage = reasonForFailure.toString();
   return errorMessage.includes('exists and is not an empty directory');
 }
-
-// this.gitBlame( 'https://github.com/scrapy/scrapy.git' );
-// cloneRepo('https://github.com/scrapy/scrapy.git');
-// cloneRepo('https://github.com/vuejs/awesome-vue.git');
-// showGitLog();
