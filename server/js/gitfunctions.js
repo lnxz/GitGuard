@@ -15,11 +15,12 @@ var gitClone = (repoUrl, callback) => {
   // start executing
   let command = CHILD_PROCESS.exec(`git clone ${repoUrl} ${repoPath}`, function (error, stdout, stderr) {
     if (error) {
-      // console.log(error.stack);
-      // console.log('Error code: ' + error.code);
-      // console.log('Signal received: ' + error.signal);
+      console.log(error.stack);
+      console.log('Error code: ' + error.code);
+      console.log('Signal received: ' + error.signal);
     }
     callback(error, stdout, repoPath);
+    return
   });
 
   command.on('exit', function (code) {
@@ -88,12 +89,14 @@ exports.getAuthors = (repoUrl, callback) => {
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
           callback(error, json);
+          return
         })
       }
     } else {
       gitLog(repoPath, arguments, (error, data) => {
         json = stringToJsonArray(data);
         callback(error, json);
+        return
       });
     }
   });
@@ -139,7 +142,6 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
           }, (err, stdout, stderr) => {
             if (err) {
               console.log(err)
-              throw err;
             }
 
             // console.log(stdout);
@@ -148,8 +150,7 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
 
             let json = stringToJsonArray(stdout)
             callback(error, json);
-
-
+            return
           });
 
         });
@@ -183,12 +184,11 @@ exports.getAuthorsAdditionsDeletions = (repoUrl, callback) => {
         }, (err, stdout, stderr) => {
           if (err) {
             console.log(err)
-            throw err;
           }
 
           let json = stringToJsonArray(stdout)
           callback(error, json);
-
+          return
         });
       });
     }
@@ -210,15 +210,18 @@ exports.getAuthorsStability = (repoUrl, callback) => {
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
           callback(error, json);
+          return
         })
       } else {
         callback(error, ''); //sends nothin
+        return
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
         callback(error, json);
+        return
       })
     }
   })
@@ -239,15 +242,18 @@ exports.getAuthorsCommits = (repoUrl, authorName, callback) => {
         executeCommand(command, repoPath, (error, json) => {
           // jiafeng's command already format swee swee
           callback(error, json);
+          return
         })
       } else {
         callback(error, ''); //sends nothin
+        return
       }
 
     } else {
       executeCommand(command, repoPath, (error, json) => {
         // jiafeng's command already format swee swee
         callback(error, json);
+        return
       })
     }
   })
@@ -267,15 +273,18 @@ exports.getCommitCount = (repoUrl, callback) => {
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
           callback(error, json);
+          return
         })
       } else {
         callback(error, ''); //sends nothin
+        return
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
         callback(error, json);
+        return
       })
     }
   })
@@ -295,15 +304,18 @@ exports.getRepoFiles = (repoUrl, callback) => {
         executeCommand(command, repoPath, (error, data) => {
           let json = stringToJsonArray(data)
           callback(error, json);
+          return
         })
       } else {
         callback(error, ''); //sends nothin
+        return
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
         callback(error, json);
+        return
       })
     }
   })
@@ -322,14 +334,17 @@ exports.getCodes = (repoUrl, branch, file, callback) => {
 
         executeCommand(command, repoPath, (error, data) => {
           callback(error, Base64.encode(data));
+          return
         })
       } else {
         callback(error, ''); //sends nothin
+        return
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         callback(error, Base64.encode(data));
+        return
       })
     }
   })
@@ -358,12 +373,14 @@ exports.whosYourDaddy = (repoUrl, lineStart, lineEnd, file, callback) => {
         })
       } else {
         callback(error, '{}'); //sends nothin
+        return
       }
 
     } else {
       executeCommand(command, repoPath, (error, data) => {
         let json = stringToJsonArray(data)
         callback(error, json);
+        return
       })
     }
   })
@@ -376,9 +393,9 @@ var executeCommand = (command, repoPath, callback) => {
   }, (error, stdout, stderr) => {
     if (error) {
       console.log(error)
-      throw error;
     }
     callback(error, stdout);
+    return
   })
 }
 
