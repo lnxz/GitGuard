@@ -30,7 +30,9 @@
 <body style="height: 100%; overflow: hidden;">
 
 <script>
+var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
 var repoURL = "";
+var storedEmail = "";
   
 $(document).ready(function() {   
   $("#repo").on('input', function() {
@@ -46,12 +48,31 @@ $(document).ready(function() {
     });
     document.getElementById('iframe_body').src = document.getElementById('iframe_body').src;
   });
-});
   
-function promptEmail() {
-  var email = prompt("Enter emails seperated by the ';' character");
+  promptEmail();
+});
 
-  if (email != null) {
+function promptEmail() {
+  var email = prompt("Enter your email address to continue");
+  if (email != null && email != "") {
+    storedEmail = email;
+    
+    var postData = { email : email };
+    
+    $.post(api + '/lastAccess', postData, 
+      function(returnedData){
+        console.log(returnedData);
+      }
+    );
+  } else {
+    promptEmail();
+  }
+}
+  
+function subscribe() {
+  var email = prompt("Enter emails seperated by the ';' character", storedEmail);
+
+  if (email != null && email != "") {
     var emails = email.split(';');
     var emailArray = new Array();
     
@@ -61,7 +82,7 @@ function promptEmail() {
     
     var postData = { emails: emailArray, repo : repoURL };
     
-    $.post('http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/subscribe', postData, 
+    $.post(api + '/subscribe', postData, 
       function(returnedData){
         console.log(returnedData);
       }
@@ -85,7 +106,7 @@ function promptEmail() {
     <ul class="nav navbar-nav navbar-right">
       <li style="margin: 10px 0px 10px 0px;"><span style="color: white; height: 30px; font-size: 21px;">Repo URL: </span></li>
       <li><input class="repo-input" id="repo" type="text"/></li>
-      <li><button class="btn btn-default" style="margin: 10px 10px 10px 0px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="promptEmail()">Subscribe</button></li>
+      <li><button class="btn btn-default" style="margin: 10px 10px 10px 0px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="subscribe()">Subscribe</button></li>
     </ul>
   </div>
 </nav>
