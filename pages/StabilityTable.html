@@ -92,7 +92,7 @@ function processData(data, dataPersist){
       additions: parseFloat(data[i].additions),
       deletions: parseFloat(data[i].deletions),
       LinesPersist: lines,
-      Stability: parseFloat(lines*100/parseFloat(data[i].additions)+parseFloat(data[i].deletions))).toFixed(2);
+      Stability: parseFloat(lines*100/parseFloat(data[i].additions)+parseFloat(data[i].deletions)).toFixed(2)
     };
     dataArr.push(obj);
   }
