@@ -84,12 +84,15 @@ function processData(data, dataPersist){
         lines = dataPersist[j].lines;
       }
     }
+    if (lines == 0) {
+      lines = parseFloat(data[i].additions)/2;
+    }
     var obj = {
       Name: data[i].name,
       additions: parseFloat(data[i].additions),
       deletions: parseFloat(data[i].deletions),
       LinesPersist: lines,
-      Stability: lines*100/(parseFloat(data[i].additions)+parseFloat(data[i].deletions))
+      Stability: parseFloat(lines*100/parseFloat(data[i].additions)+parseFloat(data[i].deletions))).toFixed(2);
     };
     dataArr.push(obj);
   }
