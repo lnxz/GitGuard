@@ -3,13 +3,32 @@
 <head>
   <meta charset="utf-8">
   <link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" type="text/css" href="../css/multi-select.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js" charset="utf-8"></script>
   <script src="../js/nv.d3.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="../js/jquery.multi-select.js"></script>
+	<script src="../js/jquery.quicksearch.js"></script>
   <style>
-    text {
-      font: 12px sans-serif;
+    input.search-input {
+      box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      width: 100%;
+      margin-bottom: 5px;
+      height: auto;
+      border-radius: 4px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+      -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+      -webkit-transition: border linear .2s,box-shadow linear .2s;
+      -moz-transition: border linear .2s,box-shadow linear .2s;
+      -o-transition: border linear .2s,box-shadow linear .2s;
+      transition: border linear .2s,box-shadow linear .2s;
     }
+    
     svg {
       display: block;
     }
@@ -22,49 +41,144 @@
   </style>
 </head>
 <body>
-
+<h1>Compare Additions/Deletions</h1>
+<div>
+  <select id='custom-headers' multiple='multiple' class='searchable'></select>
+</div>
 <div id="viz">
   <svg></svg>
 </div>
 
 <script>
-  var repoURL = "https://github.com/lnxz/GitGuard";
-  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
-  var url = api + "/authorsAdditionsDeletions?repo=" + repoURL;
+  function gup( name, url ) {
+    if (!url) url = location.href;
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regexS = "[\\?&]"+name+"=([^&#]*)";
+    var regex = new RegExp( regexS );
+    var results = regex.exec( url );
+    return results == null ? null : results[1];
+  }
   
+  var repoURL = gup('repo', window.location.href);
+  
+  var data;
+  
+  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
+  var url = api + "/authors?repo=" + repoURL;
   $.getJSON(url, function(response) {
-    var data = response;
+    var authorData = new Array();
     
-    data.sort(function(a,b) {
-      return (parseFloat(b.additions) + parseFloat(b.deletions)) - (parseFloat(a.additions) + parseFloat(a.deletions));
-    });
-    
-    var deletions = new Array();
-    var additions = new Array();
-
-    for (var i = 0; i < data.length; i++) {
-	  //If name is selected, do this, else nothing
-      var size = parseFloat(data[i].deletions);
-      var obj = {
-        key: "Deletions",
-        series: 0,
-        size: size,
-        x: data[i].name,
-        y: size,
-      };
-      deletions.push(obj);
-
-      var size2 = parseFloat(data[i].additions);
-      var obj2 = {
-        key: "Additions",
-        series: 0,
-        size: size2,
-        x: data[i].name,
-        y: size2,
-      };
-      additions.push(obj2);
+    var j = 0;
+    for (var i = 0; i < response.length; i++) {
+      if(response[i].email!="none@none") {
+        authorData[j] = response[i];
+        j++;
+      }
     }
 
+    authorData.forEach(function (item) {
+      var elem = "<option>" + item.name + ", " + item.email + "</option>";
+      $('#custom-headers').append(elem);
+    });
+    
+    $('.searchable').multiSelect({
+      selectableHeader: "<input type='text' class='search-input' autocomplete='off'>",
+      selectionHeader: "<input type='text' class='search-input' autocomplete='off'>",
+      afterInit: function (ms) {
+        var that = this,
+          $selectableSearch = that.$selectableUl.prev(),
+          $selectionSearch = that.$selectionUl.prev(),
+          selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
+          selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
+
+        that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
+          .on('keydown', function (e) {
+            if (e.which === 40) {
+              that.$selectableUl.focus();
+              return false;
+            }
+          });
+
+        that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
+          .on('keydown', function (e) {
+            if (e.which == 40) {
+              that.$selectionUl.focus();
+              return false;
+            }
+          });
+      },
+      afterSelect: function (values) {
+        this.qs1.cache();
+        this.qs2.cache();
+        loadVisualizations();
+      },
+      afterDeselect: function (values) {
+        this.qs1.cache();
+        this.qs2.cache();
+        loadVisualizations();
+      }
+    });
+  });
+  
+  function loadVisualizations() {
+    var selectedNames = new Array();
+    
+    var i = 0;
+    $('.ms-selection > .ms-list li').each(function () {
+      if ($(this).css('display') != 'none') {
+        var content = $(this).text().split(',');
+        selectedNames[i] = content[0];
+        i++;
+      }
+    });
+    
+    if (data == null) {
+      var url = api + "/authorsAdditionsDeletions?repo=" + repoURL;
+      $.getJSON(url, function(response) {
+        data = response;
+
+        data.sort(function(a,b) {
+          return (parseFloat(b.additions) + parseFloat(b.deletions)) - (parseFloat(a.additions) + parseFloat(a.deletions));
+        });
+        
+        processData(data, selectedNames);
+      });
+    } else {
+      processData(data, selectedNames);
+    }
+  }
+  
+  function processData(data, selectedNames) {
+    var deletions = new Array();
+    var additions = new Array();
+    
+    var isSelected = false;
+    for (var i = 0; i < data.length; i++) {
+      for (var j = 0; j < selectedNames.length; j++) {
+        if (data[i].name == selectedNames[j]) {
+          var size = parseFloat(data[i].deletions);
+          var obj = {
+            key: "Deletions",
+            series: 0,
+            size: size,
+            x: data[i].name,
+            y: size,
+          };
+          deletions.push(obj);
+
+          var size2 = parseFloat(data[i].additions);
+          var obj2 = {
+            key: "Additions",
+            series: 0,
+            size: size2,
+            x: data[i].name,
+            y: size2,
+          };
+          additions.push(obj2);
+        }
+      }
+    }
+    
     var dataArr = new Array();
     dataArr.push(deletions);
     dataArr.push(additions);
@@ -78,7 +192,7 @@
     });
     
     drawGraph(formattedData);
-  });
+  }
   
   function drawGraph(formattedData) {
     nv.addGraph({
