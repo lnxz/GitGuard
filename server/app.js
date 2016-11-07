@@ -18,6 +18,17 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+app.use(function(req,res,next){
+    var _send = res.send;
+    var sent = false;
+    res.send = function(data){
+        if(sent) return;
+        _send.bind(res)(data);
+        sent = true;
+    };
+    next();
+});
+
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(cors());
