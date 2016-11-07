@@ -10,6 +10,7 @@ const myCache = new NodeCache();
 
 /* GET all authors */
 router.get('/authors', function (req, res, next) {
+  if (res._header) return; // someone already responded
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
@@ -58,6 +59,8 @@ router.get('/authors', function (req, res, next) {
 
 /* GET all authors addition deletion */
 router.get('/authorsAdditionsDeletions', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
@@ -106,6 +109,8 @@ router.get('/authorsAdditionsDeletions', function (req, res, next) {
 
 /* GET all authors stability */
 router.get('/authorsStability', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
@@ -155,6 +160,8 @@ router.get('/authorsStability', function (req, res, next) {
 
 /* GET all authors stability */
 router.get('/commits', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
   let repoUrl = req.query.repo
   let authorName = req.query.author
 
@@ -178,6 +185,8 @@ router.get('/commits', function (req, res, next) {
 
 /* GET all authors stability */
 router.get('/commitCount', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
@@ -199,6 +208,8 @@ router.get('/commitCount', function (req, res, next) {
 });
 
 router.get('/files', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
   let repoUrl = req.query.repo
 
   if (repoUrl == null) {
@@ -219,6 +230,8 @@ router.get('/files', function (req, res, next) {
 });
 
 router.get('/codes', function (req, res, next) {
+  if (res._header) return; // someone already responded
+
   let repoUrl = req.query.repo
   let repoBranch = req.query.branch
   let repoFile = req.query.file
@@ -242,7 +255,8 @@ router.get('/codes', function (req, res, next) {
 
 /* GET all  */
 router.get('/whosYourDaddy', function (req, res, next) {
-  console.log('hi')
+  if (res._header) return; // someone already responded
+  
   let repoUrl = req.query.repo
   let lineStart = req.query.lineStart
   let lineEnd = req.query.lineEnd
