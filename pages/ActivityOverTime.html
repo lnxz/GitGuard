@@ -28,21 +28,24 @@
 <script>
 
 
-//git log --pretty=format:%aD" --date=short
-//returns a list of commit dates to sum up to get activity over time
-//getData();
+function gup( name, url ) {
+  if (!url) url = location.href;
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( url );
+  return results == null ? null : results[1];
+}
 
-var repoUrl = "https://github.com/lnxz/GitGuard";
-//var repoUrl = "https://github.com/scrapy/scrapy";
+var repoUrl = gup('repo', window.location.href);
+  
 getData(repoUrl);
 function getData(repoUrl)
 {
-  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commitCount?repo="+ repoUrl;
-  return d3.json(url, function(response) {
-    //console.log(response);
+    var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commitCount?repo="+ repoUrl;
+    return d3.json(url, function(response) {
 
     var timeFormat = d3.time.format("%d-%B-%y");
-    //var parseTime = d3.timeParse("%d-%B-%y");
     var data = new Array();
     var total = 0;
     for (var i = 0; i < response.length; i++) {
@@ -101,7 +104,6 @@ function getData(repoUrl)
 
       while(dateNext.getTime() !== date2.getTime())
       {
-        console.log(date2.getTime, dateNext.getTime);
         var obj ={
           date: dateNext,
           count: 0
@@ -114,11 +116,6 @@ function getData(repoUrl)
 
     dataNoHole.push(dataNoDupe[dataNoDupe.length-1]);
 
-
-    console.log("Filtered",dataNoDupe);
-
-    console.log("No Hole", dataNoHole);
-    //console.log("testtest",data);
     var jsonobjects = Array() ;
     for(var i = 0; i < dataNoHole.length; i ++){
         var d1 = new Date(dataNoHole[i].date);
@@ -140,7 +137,6 @@ function getData(repoUrl)
     var jsonFinal = Array(1);
     jsonFinal[0] = jsonVariable;
 
-    console.log(jsonFinal);
     graphRender(jsonFinal);
   })
 }

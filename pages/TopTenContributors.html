@@ -28,7 +28,16 @@
 </div>
 
 <script>
-  var repoURL = "https://github.com/tungnk1993/scrapy";
+  function gup( name, url ) {
+    if (!url) url = location.href;
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regexS = "[\\?&]"+name+"=([^&#]*)";
+    var regex = new RegExp( regexS );
+    var results = regex.exec( url );
+    return results == null ? null : results[1];
+  }
+
+  var repoURL = gup('repo', window.location.href);
   var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
   var url = api + "/authorsAdditionsDeletions?repo=" + repoURL;
   

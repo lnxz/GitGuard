@@ -21,7 +21,16 @@ td, th {
   <script src="https://d3js.org/d3.v4.min.js"></script>
 
   <script>
-  var repoUrl = "https://github.com/lnxz/GitGuard";
+  function gup( name, url ) {
+    if (!url) url = location.href;
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regexS = "[\\?&]"+name+"=([^&#]*)";
+    var regex = new RegExp( regexS );
+    var results = regex.exec( url );
+    return results == null ? null : results[1];
+  }
+
+  var repoUrl = gup('repo', window.location.href);
   getData();
 
 function getData()
@@ -48,8 +57,6 @@ function getDataPersist(data)
   var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/authorsStability?repo=" + repoUrl;
   d3.json(url, function(response) {
 
-    console.log(response);
-
     var dataPersist = new Array();
     for (var i = 0; i < response.length; i++) {
       var obj = {
@@ -58,7 +65,6 @@ function getDataPersist(data)
       }
       dataPersist.push(obj);
     }
-    console.log("dataPersist", dataPersist);
 
     var dataArr = processData(data,dataPersist);
     var peopleTable = tabulate(dataArr, ["Name", "LinesPersist","Stability"]);
@@ -87,7 +93,6 @@ function processData(data, dataPersist){
     };
     dataArr.push(obj);
   }
-  console.log(dataArr);
   return dataArr;
 }
 
