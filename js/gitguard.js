@@ -105,20 +105,20 @@ function loadVisualizations() {
 	}
 	function updateMinMax(email) {
 		//var repo =getRepoName();
-		rawData = varPablohoffmanJSON;
-		// var rawData = (function () {
-		// 	var json = null;
-		// 	$.ajax({
-		// 		'async': false,
-		// 		'global': false,
-		// 		'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
-		// 		'dataType': "json",
-		// 		'success': function (data) {
-		// 			json = data;
-		// 		}
-		// 	});
-		// 	return json;
-		// })();
+		//rawData = varPablohoffmanJSON;
+		 var rawData = (function () {
+		 	var json = null;
+		 	$.ajax({
+		 		'async': false,
+		 		'global': false,
+		 		'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
+		 		'dataType': "json",
+		 		'success': function (data) {
+		 			json = data;
+		 		}
+		 	});
+		 	return json;
+		 })();
 
 		rawData.sort(function (a, b) { var c = new Date(a.date); var d = new Date(b.date); return c - d; });
 		var rawDataMinDate = reconstructRawDate(new Date(rawData[0].date));
