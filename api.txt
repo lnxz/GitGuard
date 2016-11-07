@@ -5,31 +5,28 @@ API = http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com
 repoURL = https://github.com/lnxz/GitGuard
 
 /authors repo
-e.g. API/authors?repo=repoURL
+e.g. hostname/authors?repo=repoURL
 
 /authorsAdditionsDeletions repo
-e.g. API/authorsAdditionsDeletions?repo=repoURL
+e.g. hostname/authorsAdditionsDeletions?repo=repoURL
 
 /commits repo author
-e.g. API/commits?repo=repoURL&author=Siro
+e.g. hostname/commits?repo=repoURL&author=Siro
+
+/commitCount repo
+e.g. hostname/commitCount?repo=repoUrl
 
 /files repo
-e.g. API/files?repo=repoURL
+e.g. hostname/files?repo=repoURL
 
 /fileStats repo topN
-e.g. API/fileStats?repo=repoURL&topN=10
+e.g. hostname/fileStats?repo=repoURL&topN=10
 
 /codes repo branch
-e.g. API/codes?repo=repoURL&branch=master&file=pages/compare.html
+e.g. hostname/codes?repo=repoURL&branch=master&file=pages/compare.html
 
 /whosYourDaddy repo lineStart lineEnd file
-e.g. API/whosYourDaddy?repo=repoURL&startLine=1&endLine=3&file=pages/compare.html
-
-given start,end and filepath, return an array of commits
-git log -L {start},{end}:{file} | grep commit
-
-given a commit, return author and date
-git log -p {commit hash} -1 | grep -e Author -e Date
+e.g. hostname/whosYourDaddy?repo=repoURL&startLine=1&endLine=3&file=pages/compare.html
 
 
 
