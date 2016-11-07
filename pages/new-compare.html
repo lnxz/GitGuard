@@ -1,0 +1,328 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Compare</title>
+  <link rel="stylesheet" type="text/css" href="../css/multi-select.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js"></script>
+	<script src="../js/nv.d3.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="../js/jquery.multi-select.js"></script>
+	<script src="../js/jquery.quicksearch.js"></script>
+  <style>
+    input.search-input {
+      box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      width: 100%;
+      margin-bottom: 5px;
+      height: auto;
+      border-radius: 4px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+      -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+      -webkit-transition: border linear .2s,box-shadow linear .2s;
+      -moz-transition: border linear .2s,box-shadow linear .2s;
+      -o-transition: border linear .2s,box-shadow linear .2s;
+      transition: border linear .2s,box-shadow linear .2s;
+    }
+    
+    #tblItems th, #tblItems td {
+      border: 1px solid #dddddd;
+      padding: 8px;
+      vertical-align: top;
+    }
+    
+    #tblItems th {
+      background-color: #f9f9f9;
+      dislay: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Largest files in repo</h1>
+  <div>
+    <div>
+      <select id='custom-headers' multiple='multiple' class='searchable'></select>
+    </div>
+    <div id="chart" class='with-3d-shadow with-transitions'>
+      <svg style="height: 720px;"></svg>
+    </div>
+    <div>
+      <table id="tblItems">
+        <tr>
+          <th>No.</th>
+          <th>Email</th>
+          <th>Date</th>
+          <th>Commits / Total Commits</th>
+          <th>Commit Hash</th>
+        </tr>
+      </table>
+    </div>
+  </div>
+<script>
+  var repoURL = "https://github.com/scrapy/scrapy.git";
+  var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
+  var url = api + "/authors?repo=" + repoURL;
+  
+  $.getJSON(url, function(response) {
+    var authorData = new Array();
+    
+    var j = 0;
+    for (var i = 0; i < response.length; i++) {
+      if(response[i].email!="none@none") {
+        authorData[j] = response[i];
+        j++;
+      }
+    }
+
+    authorData.forEach(function (item) {
+      var elem = "<option>" + item.name + ", " + item.email + "</option>";
+      $('#custom-headers').append(elem);
+    });
+    
+    $('.searchable').multiSelect({
+      selectableHeader: "<input type='text' class='search-input' autocomplete='off'>",
+      selectionHeader: "<input type='text' class='search-input' autocomplete='off'>",
+      afterInit: function (ms) {
+        var that = this,
+          $selectableSearch = that.$selectableUl.prev(),
+          $selectionSearch = that.$selectionUl.prev(),
+          selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
+          selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
+
+        that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
+          .on('keydown', function (e) {
+            if (e.which === 40) {
+              that.$selectableUl.focus();
+              return false;
+            }
+          });
+
+        that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
+          .on('keydown', function (e) {
+            if (e.which == 40) {
+              that.$selectionUl.focus();
+              return false;
+            }
+          });
+      },
+      afterSelect: function (values) {
+        this.qs1.cache();
+        this.qs2.cache();
+        loadVisualizations();
+      },
+      afterDeselect: function (values) {
+        this.qs1.cache();
+        this.qs2.cache();
+        loadVisualizations();
+      }
+    });
+  });
+  
+  function loadVisualizations() {
+    var selected = new Array();
+    var selectedData = [];
+    var minDate; var maxDate;
+    var i = 0;
+    $('.ms-selection > .ms-list li').each(function () {
+      if ($(this).css('display') != 'none') {
+        var content = $(this).text().split(' ');
+        selected[i] = content[content.length - 1];
+        i++;
+        updateMinMax(content[content.length - 1]);
+      }
+    });
+
+    for (var x = 0; x < selected.length; x++) {
+      var series = x;
+      selectedData.push(jsonDataFrom(selected[x], 1, minDate, maxDate, x));//selected[i] is email
+    }
+
+    plotChart(selected, selectedData);
+
+    function isEmpty(str) {
+      return (!str || 0 === str.length);
+    }
+    
+    function updateMinMax(email) {
+      var rawData = (function () {
+        var json = null;
+        $.ajax({
+          'async': false,
+          'global': false,
+          'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
+          'dataType': "json",
+          'success': function (data) {
+            json = data;
+          }
+        });
+        return json;
+      })();
+
+      rawData.sort(function (a, b) { var c = new Date(a.date); var d = new Date(b.date); return c - d; });
+      var rawDataMinDate = reconstructRawDate(new Date(rawData[0].date));
+      var rawDataMaxDate = reconstructRawDate(new Date(rawData[rawData.length - 1].date));
+      if (isEmpty(minDate) && isEmpty(maxDate)) {
+        minDate = rawDataMinDate;
+        maxDate = rawDataMaxDate;
+      }
+      else if (rawDataMinDate.getTime() < minDate.getTime()) {
+        minDate = rawDataMinDate;
+      }
+      else if (rawDataMaxDate.getTime() > maxDate.getTime()) {
+        maxDate = rawDataMaxDate;
+      }
+    }
+  }
+  
+  function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
+    var formatedData;
+    var rawData = (function () {
+      var json = null;
+      $.ajax({
+        'async': false,
+        'global': false,
+        'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
+        'dataType': "json",
+        'success': function (data) {
+          json = data;
+        }
+      });
+      return json;
+    })();
+
+    rawData.sort(function (a, b) { var c = new Date(a.date); var d = new Date(b.date); return c - d; });
+
+    if (TypeOfFormat == 1)//day per commit
+    { formatedData = commitPerDay(rawData, email, series); }
+
+    return formatedData;
+
+    function commitPerDay(rawData, email, series) {
+
+      var individualFirstCommitDate = reconstructRawDate(new Date(rawData[0].date));
+      var individualLastCommitDate = reconstructRawDate(new Date(rawData[rawData.length - 1].date));
+
+      function setData(start, end, series) {
+        var array = [];
+        var lineSeries = series;
+        var startDate = new Date(start);
+        var day = 0;
+        if (startDate == end) {
+          var commits = 0;
+          for (var i = 0; i < rawData.length; i++) {
+            if (reconstructRawDate(new Date(rawData[i].date)).toString() == startDate.toString()) { //same date
+              commits++; //increment by 1 commit
+              arrayOfCommitKey.push(rawData[i].commit);
+            }
+          }
+          array.push({ "commitkey": arrayOfCommitKey, "series": series, "label": reconstructRawDate(startDate), "x": reconstructRawDate(startDate), "y": commits });
+        }
+        else {
+          var i = 0;
+          //check startdate is always smaller than end, because:
+          //if(startDate==end) cover if its equal
+          //sort is ascending order end cfm bigger than startdate
+          while (startDate <= end) {
+            var commits = 0;
+            var arrayOfCommitKey = [];
+            // loop rawData(a lot)
+            for (; i < rawData.length; i++) {
+              //check if rawData date equals startDate(current date)
+              if (reconstructRawDate(new Date(rawData[i].date)).toString() == startDate.toString()) {
+                commits++; //increment by 1 commit
+                arrayOfCommitKey.push(rawData[i].commit);
+              }
+              else {
+                //if nt equal means, no point looping. cos futher down the loop cfm is some larger dates.
+                //i is use to keep track of current position
+                break;
+              }
+            }
+            array.push({ "commitkey": arrayOfCommitKey, "series": series, "label": reconstructRawDate(startDate), "x": reconstructRawDate(startDate), "y": commits });
+            day++;
+            startDate.setDate(startDate.getDate() + 1);
+          }
+        }
+        return array;
+      }
+      
+      return finalData = {
+        "area": false,
+        "key": email,
+        "values": setData(minDate, maxDate),
+        "firstCommitDate": individualFirstCommitDate,
+        "lastCommitDate": individualLastCommitDate,
+        "totalcommit": rawData.length,
+      };
+    }
+  }
+
+  function plotChart(selected, selectedData) {
+    var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    nv.addGraph(function () {
+      var chart = nv.models.lineWithFocusChart().width(1720).height(720);;
+      chart.xAxis.axisLabel('Date').tickFormat(function (d) { return d3.time.format('%d-%b-%y')(new Date(d)); });
+
+      chart.focusHeight(50 + 20);
+      chart.focusMargin({ "bottom": 20 + 20 });
+      chart.x2Axis.axisLabel('Date').tickFormat(function (d) { return d3.time.format('%d-%b-%y')(new Date(d)); });
+
+      chart.yAxis.tickFormat(d3.format('d'));
+      chart.y2Axis.tickFormat(d3.format('d'));
+      if (selectedData.length > 0) {
+        chart.lines.dispatch.on('elementClick', function (e) {
+          $('#tblItems').find('th').show();
+          $('#tblItems').find('tr:gt(0)').remove();
+          
+          for (var x = 0; x < selectedData.length; x++) {
+            var xAxisDate = new Date(e[x].point.label);
+            var xAxisFormatedDate = xAxisDate.getDate() + " " + MONTH[xAxisDate.getMonth()] + " " + xAxisDate.getFullYear();
+            var allCommitKey = "";
+            for (var k = 0; k < e[x].point.commitkey.length; k++) {
+              allCommitKey += e[x].point.commitkey[k] + "<br>";
+            }
+            var commitOverTotalCommits = e[x].point.commitkey.length.toString() + " / " + e[x].series.totalcommit.toString();
+            $('#tblItems').append("<tr><td>" + (x+1) + "</td><td>" + e[x].series.key + "</td><td>" + xAxisFormatedDate + "</td><td>" + commitOverTotalCommits + "</td><td>" + allCommitKey + "</td></tr>");
+          }
+        });
+      }
+      else if (selectedData.length == 0) {
+
+        $(document).ready(function () {
+          var oTable = $('#tblItems').dataTable();
+
+          // Immediately 'nuke' the current rows (perhaps waiting for an Ajax callback...)
+          oTable.fnClearTable();
+        });
+        chart.noData("Nothing to see here. ");
+
+      }
+      chart.useInteractiveGuideline(true);
+
+      d3.select('#chart svg')
+        .datum(selectedData)
+        .call(chart);
+
+      nv.utils.windowResize(chart.update);
+
+      return chart;
+    });
+  }
+  
+  function reconstructRawDate(dateObj) { //accept date object return parsedFormat of date
+    var parseTime = d3.time.format("%d-%b-%y");
+    var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var itemDateMthYearCombine = dateObj.getDate() + "-" + MONTH[dateObj.getMonth()] + "-" + dateObj.getFullYear().toString().substr(2, 2);
+    return parseTime.parse(itemDateMthYearCombine);
+  }
+</script>
+</body>
+
+</html>
