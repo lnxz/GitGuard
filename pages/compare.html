@@ -1,65 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>Assignment 5</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="../css/simple-sidebar.css">
-  <link rel="stylesheet" type="text/css" href="../css/gitguard.css">
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/js/bootstrap.min.js"></script>
-  <script src="../js/gitguard.js"></script>
-  <script src="../js/d3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js"></script>
-  <link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
-  <script src="../js/nv.d3.js"></script>
 
-  <link rel="stylesheet" type="text/css" href="../css/multi-select.css">
-  <script src="../js/jquery.multi-select.js"></script>
-  <script src="../js/jquery.quicksearch.js"></script>
-	
-	
-	
-	
+<head>
+	<title>Assignment 5</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../css/simple-sidebar.css">
+	<link rel="stylesheet" type="text/css" href="../css/gitguard.css">
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/js/bootstrap.min.js"></script>
+	<script src="../js/gitguard.js"></script>
+	<script src="../js/d3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js"></script>
+	<link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
+	<script src="../js/nv.d3.js"></script>
+	<script src="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css"></script>
+	<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="../css/multi-select.css">
+	<script src="../js/jquery.multi-select.js"></script>
+	<script src="../js/jquery.quicksearch.js"></script>
+
+
+
+
 </head>
+
 <body style="height:1500px">
 
-<nav class="navbar navbar-inverse navbar-fixed-top">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#" style="width:200px">GIT Guard</a>
-    </div>
-    <ul class="nav navbar-nav">
-      <li class="active"><a href="#">Summary</a></li>
-      <li><a href="./pages/compare.html">Compare</a></li>
-      <li><a href="#">File History</a></li>
-      <li><a href="#">Members LOC</a></li>
-    </ul>
-    <ul class="nav navbar-nav navbar-right">
-      <li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
-      <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-    </ul>
-  </div>
-</nav>
-  
-<div id="wrapper">
-  <!-- Sidebar -->
-  <div id="sidebar-wrapper">
-    <ul class="sidebar-nav">
-      <li>
-        <a href="#">Repo 1</a>
-      </li>
-      <li>
-        <a href="#">Repo 2</a>
-      </li>
-    </ul>
-  </div>
-  <!-- /#sidebar-wrapper -->
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#" style="width:200px">GIT Guard</a>
+			</div>
+			<ul class="nav navbar-nav">
+				<li class="active"><a href="#">Summary</a></li>
+				<li><a href="./pages/compare.html">Compare</a></li>
+				<li><a href="#">File History</a></li>
+				<li><a href="#">Members LOC</a></li>
+			</ul>
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+				<li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+			</ul>
+		</div>
+	</nav>
 
-	<!-- Page Content -->
+	<div id="wrapper">
+		<!-- Sidebar -->
+		<div id="sidebar-wrapper">
+			<ul class="sidebar-nav">
+				<li>
+					<a href="#">Repo 1</a>
+				</li>
+				<li>
+					<a href="#">Repo 2</a>
+				</li>
+			</ul>
+		</div>
+		<!-- /#sidebar-wrapper -->
+
+		<!-- Page Content -->
 		<div id="page-content-wrapper">
 			<div class="container-fluid">
 				<div class="row">
@@ -92,14 +96,33 @@
 										width: 100%;
 									}
 								</style>
+
 								<div id="chart" class='with-3d-shadow with-transitions'>
 									<svg style="height: 720px;"></svg>
 								</div>
 
 
+
 						</div>
 					</div>
 				</div>
+				<div class="col-lg-12">
+					<table id="tblItems" class="table table-bordered table-striped">
+						<thead>
+							<tr>
+								<th>Index</th>
+								<th>Email</th>
+								<th>Date</th>
+								<th>Commits / Total Commits</th>
+								<th>Commit Key</th>
+
+							</tr>
+						</thead>
+					</table>
+
+
+				</div>
+
 			</div>
 		</div>
 		<!-- /#page-content-wrapper -->
@@ -108,4 +131,3 @@
 	</body>
 
 </html>
-
