@@ -31,12 +31,10 @@
 
 <script>
 var repoURL = "";
-var prevPage = "";
-
-function promptRepo() {
-  repoURL = prompt("Enter a git repository url");
   
-  if (repoURL != null) {
+$(document).ready(function() {   
+  $("#repo").on('input', function() {
+    repoURL = $("#repo").val();
     $("a:gt(0)").each(function() {
       var elem = $(this);       
       var _href = elem.attr("href");
@@ -46,29 +44,24 @@ function promptRepo() {
       }
       elem.attr("href", _href + '?repo=' + repoURL);
     });
+  });
+});
+  
+function promptEmail() {
+  var email = prompt("Enter emails seperated by the ';' character");
+
+  if (email != null) {
+    //pass email string -> email1;email2;email3
+    //to server via url?? idk
   }
 }
   
-function repoClick() {
-  repoURL = $("#repo").val();
-  
-  $("a:gt(0)").each(function() {
-    var elem = $(this);       
-    var _href = elem.attr("href");
-    if (_href.indexOf('?') == -1) {
-    } else {
-      _href = _href.substr(0,_href.indexOf('?'));
-    }
-    elem.attr("href", _href + '?repo=' + repoURL);
-  });
-  
-}
 </script>
   
 <nav class="navbar navbar-inverse navbar-fixed-top">
   <div class="container-fluid">
     <ul class="nav navbar-nav">
-      <li class="active"><a onclick="promptRepo()">GIT Guard</a></li>
+      <li class="active"><a onclick="javascript:void(0)">GIT Guard</a></li>
       <li><a href="pages/ActivityOverTime.html" target="iframe_body">Activity</a></li>
       <li><a href="pages/TopTenContributors.html" target="iframe_body">Top Contributors</a></li>
       <li><a href="pages/StabilityTable.html" target="iframe_body">Stability Stats</a></li>
@@ -77,8 +70,9 @@ function repoClick() {
       <li><a href="pages/LargestFiles.html" target="iframe_body">Largest Files</a></li>
     </ul>
     <ul class="nav navbar-nav navbar-right">
+      <li style="margin: 10px;"><span style="color: white; height: 30px; font-size: 21px; padding: 0px 5px 0px 10px;">Repo URL: </span></li>
       <li><input class="repo-input" id="repo" type="text"/></li>
-      <li><button class="btn btn-default" style="margin: 10px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="repoClick()">Load</button></li>
+      <li><button class="btn btn-default" style="margin: 10px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="promptEmail()">Subscribe</button></li>
     </ul>
   </div>
 </nav>
