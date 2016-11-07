@@ -6,21 +6,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<style>
+  input.repo-input {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    width: 300px;
+    height: 30px;
+    margin: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    -webkit-transition: border linear .2s,box-shadow linear .2s;
+    -moz-transition: border linear .2s,box-shadow linear .2s;
+    -o-transition: border linear .2s,box-shadow linear .2s;
+    transition: border linear .2s,box-shadow linear .2s;
+  }
+</style>
+  
 </head>
 <body style="height: 100%; overflow: hidden;">
-  
+
 <script>
 var repoURL = "";
-var prevPage = "";
-
-$( document ).ready(function() {
-  promptRepo();
-});
-
-function promptRepo() {
-  repoURL = prompt("Enter a git repository url");
   
-  if (repoURL != null) {
+$(document).ready(function() {   
+  $("#repo").on('input', function() {
+    repoURL = $("#repo").val();
     $("a:gt(0)").each(function() {
       var elem = $(this);       
       var _href = elem.attr("href");
@@ -30,22 +44,35 @@ function promptRepo() {
       }
       elem.attr("href", _href + '?repo=' + repoURL);
     });
-  } else {
-    promptRepo();
+  });
+});
+  
+function promptEmail() {
+  var email = prompt("Enter emails seperated by the ';' character");
+
+  if (email != null) {
+    //pass email string -> email1;email2;email3
+    //to server via url?? idk
   }
 }
+  
 </script>
   
 <nav class="navbar navbar-inverse navbar-fixed-top">
   <div class="container-fluid">
     <ul class="nav navbar-nav">
-      <li class="active"><a onclick="promptRepo()">GIT Guard</a></li>
+      <li class="active"><a onclick="javascript:void(0)">GIT Guard</a></li>
       <li><a href="pages/ActivityOverTime.html" target="iframe_body">Activity</a></li>
       <li><a href="pages/TopTenContributors.html" target="iframe_body">Top Contributors</a></li>
       <li><a href="pages/StabilityTable.html" target="iframe_body">Stability Stats</a></li>
       <li><a href="pages/Compare.html" target="iframe_body">Compare</a></li>
       <li><a href="pages/RepositoryFiles.html" target="iframe_body">Repository Files</a></li>
       <li><a href="pages/LargestFiles.html" target="iframe_body">Largest Files</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li style="margin: 10px;"><span style="color: white; height: 30px; font-size: 21px; padding: 0px 5px 0px 10px;">Repo URL: </span></li>
+      <li><input class="repo-input" id="repo" type="text"/></li>
+      <li><button class="btn btn-default" style="margin: 10px; height: 30px; font-size: 16px; padding: 0px 10px 0px 10px;" onclick="promptEmail()">Subscribe</button></li>
     </ul>
   </div>
 </nav>
