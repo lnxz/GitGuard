@@ -109,7 +109,6 @@ function loadVisualizations() {
 		}
 	});
 
-	var mthList = getMonthListBtw(minDate, maxDate);
 
 	for (var x = 0; x < selected.length; x++) {
 		var series = x;
@@ -243,17 +242,7 @@ function jsonDataFrom(email, TypeOfFormat, minDate, maxDate, series) {
 
 
 }
-function getMonthListBtw(minDate, maxDate) {
-	var startDate = moment(minDate, moment.ISO_8601);
-	var endDate = moment(maxDate, moment.ISO_8601).endOf("month");
-	var allMonthsInPeriod = [];
-	while (startDate.isBefore(endDate)) {
-		allMonthsInPeriod.push(startDate.format("MM-YYYY"));
-		startDate = startDate.add(1, "month");
-	};
-	return allMonthsInPeriod;
 
-}
 function plotChart(selected, selectedData) {
 	var MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 	nv.addGraph(function () {
