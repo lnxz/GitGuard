@@ -124,12 +124,12 @@
       afterSelect: function (values) {
         this.qs1.cache();
         this.qs2.cache();
-        loadVisualizations(url);
+        loadVisualizations(api, repoURL);
       },
       afterDeselect: function (values) {
         this.qs1.cache();
         this.qs2.cache();
-        loadVisualizations(url);
+        loadVisualizations(api, repoURL);
       }
     });
   });
@@ -160,14 +160,14 @@
     }
     
     function updateMinMax(email) {
-	          //          'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
+//'url': "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commits?repo=https://github.com/scrapy/scrapy.git&author=" + email.toString(),
 
       var rawData = (function () {
         var json = null;
         $.ajax({
           'async': false,
           'global': false,
-          'url': url+"&author=" + email.toString(),
+          'url':   api + "/commits?repo="+repoURL+"&author="+email.toString(),
           'dataType': "json",
           'success': function (data) {
             json = data;
@@ -201,7 +201,7 @@
       $.ajax({
         'async': false,
         'global': false,
-          'url': url+"&author=" + email.toString(),
+          'url':   api + "/commits?repo="+repoURL+"&author="+email.toString(),
         'dataType': "json",
         'success': function (data) {
           json = data;
