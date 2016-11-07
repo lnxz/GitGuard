@@ -28,5 +28,10 @@ e.g. hostname/codes?repo=repoURL&branch=master&file=pages/compare.html
 /whosYourDaddy repo lineStart lineEnd file
 e.g. hostname/whosYourDaddy?repo=repoURL&startLine=1&endLine=3&file=pages/compare.html
 
+/subscribe
+usage: send a POST request, mimetype application/json
+with the following json in the body
+{"email":"quektyson@gmail.com","repo":"https://github.com/CS2103AUG2016-T17-C3/main.git"}
+
 
 
