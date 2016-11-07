@@ -52,10 +52,20 @@ function promptEmail() {
   var email = prompt("Enter emails seperated by the ';' character");
 
   if (email != null) {
-    //pass email string -> email1;email2;email3
-    //to server via url?? idk
-    console.log(new Date());
-    console.log(email);
+    var emails = email.split(';');
+    var emailArray = new Array();
+    
+    for (var i = 0; i < emails.length; i++) {
+      if (emails[i] != "") emailArray[i] = emails[i];
+    }
+    
+    var postData = { emails: emailArray, repo : repoURL };
+    
+    $.post('http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/subscribe', postData, 
+      function(returnedData){
+        console.log(returnedData);
+      }
+    );
   }
 }
   
