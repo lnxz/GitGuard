@@ -1,21 +1,27 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style> /* set the CSS */
-
-.axis--x path {
-  display: none;
-}
-
-.line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 1.5px;
-}
+<style>
+    text {
+        font: 12px sans-serif;
+    }
+    svg {
+        display: block;
+    }
+    html, body, #chart1, svg {
+        margin: 0px;
+        padding: 0px;
+        width: 100%;
+        height: 100%;
+    }
 </style>
 <body>
-
+  <div id="chart1">
+      <svg></svg>
+  </div>
 <!-- load the d3.js library -->
-<script src="https://d3js.org/d3.v4.min.js"></script>
+<link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js" charset="utf-8"></script>
+<script src="../js/nv.d3.js"></script>
 <link href="../css/nv.d3.css" rel="stylesheet" type="text/css">
 <script src="../js/nv.d3.js"></script>
 <svg width="960" height="500"></svg>
@@ -25,61 +31,26 @@
 //git log --pretty=format:%aD" --date=short
 //returns a list of commit dates to sum up to get activity over time
 //getData();
+
 var repoUrl = "https://github.com/lnxz/GitGuard";
-var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commitCount?repo=https://github.com/lnxz/GitGuard";
-
-d3.json('cumulativeLineData.json', function(data) {
-  console.log(data);
-  var newData = Array();
-  for(var i = 0; i < data.length; i ++)
-  {
-    if (newData.length == 0)
-    {
-
-    }
-  }
-
-  nv.addGraph(function() {
-    var chart = nv.models.cumulativeLineChart()
-                  .x(function(d) { return d[0] })
-                  .y(function(d) { return d[1]/100 }) //adjusting, 100% is 1.00, not 100 as it is in the data
-                  .color(d3.scale.category10().range())
-                  .useInteractiveGuideline(true)
-                  ;
-
-     chart.xAxis
-        .tickValues([1078030800000,1122782400000,1167541200000,1251691200000])
-        .tickFormat(function(d) {
-            return d3.time.format('%x')(new Date(d))
-          });
-
-    chart.yAxis
-        .tickFormat(d3.format(',.1%'));
-
-    d3.select('#chart svg')
-        .datum(data)
-        .call(chart);
-
-    //TODO: Figure out a good way to do this automatically
-    nv.utils.windowResize(chart.update);
-
-    return chart;
-  });
-});
-/*
-
-function getData()
+//var repoUrl = "https://github.com/scrapy/scrapy";
+getData(repoUrl);
+function getData(repoUrl)
 {
-  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commitCount?repo=https://github.com/lnxz/GitGuard";
+  var url = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com/commitCount?repo="+ repoUrl;
   return d3.json(url, function(response) {
-    console.log(response);
-    var parseTime = d3.timeParse("%d-%B-%y");
+    //console.log(response);
+
+    var timeFormat = d3.time.format("%d-%B-%y");
+    //var parseTime = d3.timeParse("%d-%B-%y");
     var data = new Array();
+    var total = 0;
     for (var i = 0; i < response.length; i++) {
       var obj = {
-        date: parseTime(response[i].date),
+        date: timeFormat.parse(response[i].date),
         count: parseFloat(response[i].commit_count)
       }
+      total += parseFloat(response[i].commit_count);
       data.push(obj);
     }
     data.sort(function(a,b) {
@@ -87,70 +58,129 @@ function getData()
         b = new Date(b.date);
         return b>a ? -1 : b<a ? 1 : 0;
     })
-    console.log("testtest",data);
-  })
-}
-*/
-/*
-var data = {
-  "members": [
-    {date: "05-Nov-16"},
-    {date: "02-Nov-16"},
-    {date: "05-Nov-16"},
-    {date: "06-Nov-16"},
-    {date: "06-Nov-16"},
-    {date: "05-Nov-16"},
-    {date: "05-Nov-16"},
-    {date: "05-Oct-16"},
-    {date: "05-Oct-16"},
-    {date: "05-Oct-16"},
-    {date: "23-Oct-16"},
-    {date: "23-Oct-16"},
-    {date: "25-Oct-16"}
-  ]
-};
 
-var dataArr = [];
-var idxFound = -1;
-for (var i = 0; i < data.members.length; i++)
-{
-
-  if (dataArr.length == 0)
-  {
-    var obj = {
-      date : data.members[i].date,
-      count : 1
-    }
-    dataArr.push(obj);
-
-  }else {
-    idxFound = -1;
-    for (var j = 0; j < dataArr.length; j ++)
-    {
-      if (data.members[i].date == dataArr[j].date)
+    var dataNoDupe = new Array();
+    for (var i = 0; i < response.length; i++) {
+      if(dataNoDupe.length == 0)
       {
-        idxFound = j;
+        dataNoDupe.push(data[i]);
+      }else {
+        var found = -1;
+        for( var j = 0; j < dataNoDupe.length; j ++)
+        {
+          var d1 = new Date(data[i].date);
+          var d2 = new Date(dataNoDupe[j].date);
+          if(d1.getTime() === d2.getTime())
+          {
+            found = i;
+            dataNoDupe[j].count += data[i].count;
+          }
+        }
+        if (found == -1)
+        {
+
+          dataNoDupe.push(data[i]);
+        }
       }
     }
-    if (idxFound > -1){
-      dataArr[idxFound].count ++;
-    }else {
-        var obj = {
-          count : 1,
-          date : data.members[i].date
-        }
-        dataArr.push(obj);
+
+    var dataNoHole = new Array();
+    var date0 = new Date(dataNoDupe[0].date);
+    var dateIni = new Date( date0.getTime() - 1000*60*60*24);
+    var obj ={
+      date: dateIni,
+      count: 0
     }
-  }
+    dataNoHole.push(obj);
+    dataNoHole.push(dataNoDupe[0]);
+    for(var i = 0; i < dataNoDupe.length - 1; i ++)
+    {
+      var date1 = new Date(dataNoDupe[i].date);
+      var date2 = new Date(dataNoDupe[i+1].date);
+      var dateNext =  new Date( date1.getTime() +1000*60*60*24);
+
+      while(dateNext.getTime() !== date2.getTime())
+      {
+        console.log(date2.getTime, dateNext.getTime);
+        var obj ={
+          date: dateNext,
+          count: 0
+        }
+        dataNoHole.push(obj);
+        dateNext = new Date (dateNext.getTime()+ 1000*60*60*24);
+      }
+      dataNoHole.push(dataNoDupe[i+1]);
+    }
+
+    dataNoHole.push(dataNoDupe[dataNoDupe.length-1]);
+
+
+    console.log("Filtered",dataNoDupe);
+
+    console.log("No Hole", dataNoHole);
+    //console.log("testtest",data);
+    var jsonobjects = Array() ;
+    for(var i = 0; i < dataNoHole.length; i ++){
+        var d1 = new Date(dataNoHole[i].date);
+        var newArr = new Array(2);
+         newArr[0] = d1.getTime();
+         newArr[1] = dataNoHole[i].count;
+       jsonobjects.push(newArr)
+    }
+
+    jsonVariable = {}
+    var jsonKeyK = "key";
+    jsonVariable[jsonKeyK] = "Activity";
+
+       var jsonKey  = "values";
+       jsonVariable[jsonKey] = jsonobjects;
+    var jsonKeyM = "mean";
+    jsonVariable[jsonKeyM] = total/dataNoDupe.length;
+
+    var jsonFinal = Array(1);
+    jsonFinal[0] = jsonVariable;
+
+    console.log(jsonFinal);
+    graphRender(jsonFinal);
+  })
 }
 
-dataArr.sort(function(a,b) {
-  a = new Date(a.date);
-    b = new Date(b.date);
-    return b>a ? -1 : b<a ? 1 : 0;
-});
+function graphRender (data){
+ nv.addGraph(function() {
+      var chart = nv.models.cumulativeLineChart()
+          .useInteractiveGuideline(true)
+          .x(function(d) { return d[0] })
+          .y(function(d) { return d[1] })
+          .color(d3.scale.category10().range())
+          .average(function(d) { return d.mean; })
+          .duration(200)
+          .clipVoronoi(false);
+      chart.dispatch.on('renderEnd', function() {
+          console.log('render complete: cumulative line with guide line');
+      });
 
-*/
+      chart.xAxis.tickFormat(function(d) {
+          return d3.time.format('%m/%d/%y')(new Date(d))
+      });
+
+      chart.yAxis.tickFormat(d3.format('1'));
+
+      d3.select('#chart1 svg')
+          .datum(data)
+          .call(chart);
+
+      //TODO: Figure out a good way to do this automatically
+      nv.utils.windowResize(chart.update);
+
+      chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
+      chart.state.dispatch.on('change', function(state){
+          nv.log('state', JSON.stringify(state));
+      });
+
+      return chart;
+  });
+}
 
 </script>
+
 </body>
