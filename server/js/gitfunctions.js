@@ -406,7 +406,7 @@ exports.updateSubscribers = (subscriberEmail, subscriberRepo, callback) => {
 
       //update the list
       let foundEmail = false;
-      let subscribers = contents.split('\n')
+      let subscribers = contents.split('|')
 
       for (var i = 0; i < subscribers.length; i++) {
         let details = subscribers[i].split(';')
@@ -469,7 +469,7 @@ exports.updateSubscribers = (subscriberEmail, subscriberRepo, callback) => {
 
       for (let subscriber of subscribers) {
         console.log(subscriber)
-        file.write(`${subscriber}\n`)
+        file.write(`${subscriber}|`)
       }
 
       file.end();
@@ -517,7 +517,7 @@ exports.updateLastAccess = (subscriberEmail, callback) => {
 
       //update the list
       let foundEmail = false;
-      let subscribers = contents.split('\n')
+      let subscribers = contents.split('|')
 
       for (var i = 0; i < subscribers.length; i++) {
         let details = subscribers[i].split(';')
@@ -565,7 +565,7 @@ exports.updateLastAccess = (subscriberEmail, callback) => {
 
       for (let subscriber of subscribers) {
         console.log(subscriber)
-        file.write(`${subscriber}\n`)
+        file.write(`${subscriber}|`)
       }
 
       file.end();
