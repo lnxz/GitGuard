@@ -76,17 +76,13 @@ function subscribe() {
   if (email != null && email != "") {
     var emails = email.split(';');
 
-    for (var i = 0; i < emails.length; i++) {
-      var postData = { email: emails[i], repo : repoURL };
+      var postData = { email: emails[0], repo : repoURL };
 
       $.post(api + '/subscribe', postData,
         function(returnedData){
           console.log(returnedData);
         }
       );
-
-    }
-
 
 
   }
