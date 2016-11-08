@@ -26,7 +26,7 @@
     transition: border linear .2s,box-shadow linear .2s;
   }
 </style>
-  
+
 </head>
 <body style="height: 100%; overflow: hidden;">
 
@@ -34,12 +34,12 @@
 var api = "http://ec2-54-169-173-47.ap-southeast-1.compute.amazonaws.com";
 var repoURL = "";
 var storedEmail = "";
-  
-$(document).ready(function() {   
+
+$(document).ready(function() {
   $("#repo").on('input', function() {
     repoURL = $("#repo").val();
     $("a:gt(0)").each(function() {
-      var elem = $(this);       
+      var elem = $(this);
       var _href = elem.attr("href");
       if (_href.indexOf('?') == -1) {
       } else {
@@ -49,7 +49,7 @@ $(document).ready(function() {
     });
     document.getElementById('iframe_body').src = document.getElementById('iframe_body').src;
   });
-  
+
   promptEmail();
 });
 
@@ -57,10 +57,10 @@ function promptEmail() {
   var email = prompt("Enter your email address to continue");
   if (email != null && email != "") {
     storedEmail = email;
-    
+
     var postData = { email : email };
-    
-    $.post(api + '/lastAccess', postData, 
+
+    $.post(api + '/lastAccess', postData,
       function(returnedData){
         console.log(returnedData);
       }
@@ -69,30 +69,31 @@ function promptEmail() {
     promptEmail();
   }
 }
-  
+
 function subscribe() {
   var email = prompt("Enter emails seperated by the ';' character", storedEmail);
 
   if (email != null && email != "") {
     var emails = email.split(';');
-    var emailArray = new Array();
-    
+
     for (var i = 0; i < emails.length; i++) {
-      if (emails[i] != "") emailArray[i] = emails[i];
+      var postData = { email: emails[i], repo : repoURL };
+
+      $.post(api + '/subscribe', postData,
+        function(returnedData){
+          console.log(returnedData);
+        }
+      );
+
     }
-    
-    var postData = { emails: emailArray, repo : repoURL };
-    
-    $.post(api + '/subscribe', postData, 
-      function(returnedData){
-        console.log(returnedData);
-      }
-    );
+
+
+
   }
 }
-  
+
 </script>
-  
+
 <nav class="navbar navbar-inverse navbar-fixed-top">
   <div class="container-fluid">
     <ul class="nav navbar-nav">
@@ -117,12 +118,11 @@ function subscribe() {
     </ul>
   </div>
 </nav>
-  
+
 <div style="position:absolute; left: 0; right: 0; bottom: 0; top: 50px;">
   <iframe height="100%" width="100%" src="pages/home.html" id="iframe_body" name="iframe_body"></iframe>
 </div>
-  
+
 
 </body>
 </html>
-
