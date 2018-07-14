@@ -36,7 +36,7 @@ with the following json in the body
 /lastAccess
 usage: send a POST request, mimetype application/json
 with the following json in the body
-{"email":"quektyson@gmail.com"}
+{"email":"something.com"}
 
 
 
